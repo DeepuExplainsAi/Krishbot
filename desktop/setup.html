@@ -1,0 +1,15 @@
+<!doctype html><meta charset="utf-8"><title>Krishbot setup</title>
+<style>body{font:15px system-ui;max-width:480px;margin:40px auto;padding:0 16px}input{width:100%;padding:8px;margin:4px 0 14px;box-sizing:border-box}button{padding:10px 18px}#e{color:#b00}</style>
+<h2>Krishbot setup</h2><p>Enter your keys once. They are stored only on this computer.</p><p id="e"></p>
+<form id="f">
+<label>XAI_API_KEY</label><input name="XAI_API_KEY" type="password">
+<label>COMPOSIO_API_KEY</label><input name="COMPOSIO_API_KEY" type="password">
+<label>ORGO_API_KEY</label><input name="ORGO_API_KEY" type="password">
+<label>ORGO_COMPUTER_ID</label><input name="ORGO_COMPUTER_ID">
+<button>Save and start</button></form>
+<script>
+const f=document.getElementById('f');
+document.getElementById('e').textContent=new URLSearchParams(location.search).get('error')||'';
+krishbot.get().then(v=>{for(const k in v)f.elements[k].value=v[k]});
+f.onsubmit=e=>{e.preventDefault();const v={};for(const k of ['XAI_API_KEY','COMPOSIO_API_KEY','ORGO_API_KEY','ORGO_COMPUTER_ID'])v[k]=f.elements[k].value;if(Object.values(v).some(x=>!x.trim())){document.getElementById('e').textContent='Fill all four fields.';return}krishbot.save(v)};
+</script>

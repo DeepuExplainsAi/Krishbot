@@ -1,0 +1,52 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci
+      - run: npm run build
+      - name: Stage app
+        shell: bash
+        run: |
+          mkdir -p desktop/server desktop/web
+          cp -r server/dist desktop/server/dist
+          cp -r server/box desktop/server/box
+          cp -r web/dist desktop/web/dist
+          cp desktop/app-type.json desktop/server/package.json
+      - run: npm install
+        working-directory: desktop
+      - run: npm run dist
+        working-directory: desktop
+      - uses: actions/upload-artifact@v4
+        with:
+          name: krishbot-${{ matrix.os }}
+          path: |
+            desktop/release/*.AppImage
+            desktop/release/*.exe
+            desktop/release/*.dmg
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { path: dist, merge-multiple: true }
+      - run: ls -R dist
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Krishbot (latest)
+          make_latest: true
+          files: dist/*
