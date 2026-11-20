@@ -88,7 +88,7 @@ $('#set').innerHTML=`
 <label>Name</label><input id="mc_n"><label>Command (e.g. npx -y @modelcontextprotocol/server-filesystem /home/me) — or a URL</label><input id="mc_c"><label>Environment (KEY=value per line, optional)</label><textarea id="mc_e" rows="2"></textarea>
 <div class="row"><button class="p" onclick="addMcp()">Add MCP server</button></div><div id="mc_r" style="margin-top:8px;color:var(--mut)"></div></fieldset>
 <fieldset><legend>Safety</legend><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" style="width:auto" ${cfg.autoApprove?'checked':''} onchange="cfg.autoApprove=this.checked;save()"> Run actions without asking (commands, file writes, API changes)</label></fieldset>
-<fieldset><legend>About</legend>Krishbot is open source (MIT). Third-party components: Electron (MIT), Model Context Protocol SDK (MIT). Model providers named above are not affiliated with Krishbot.</fieldset>
+<fieldset><legend>About</legend>Krishbot is open source (MIT). Copyright © 2026 Krishbot, DeepuExplainsAi. Third-party components: Electron (MIT), Model Context Protocol SDK (MIT). Model providers named above are not affiliated with Krishbot.</fieldset>
 <button onclick="toggle(false)">Back to chat</button>`;
 $('#pre').onchange=e=>presetForm(PRESETS[e.target.value])}
 const B=()=>cfg.bots.find(x=>x.id===cur);
