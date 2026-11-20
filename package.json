@@ -1,13 +1,31 @@
 {
   "name": "krishbot",
-  "private": true,
-  "description": "Krishbot: a team of Hermes agents, each with its own screen on one Orgo computer, with Composio apps and xAI voice.",
-  "workspaces": ["server", "web"],
+  "productName": "Krishbot",
+  "version": "1.0.0",
+  "description": "Krishbot: your own AI agents on your own computer.",
+  "main": "main.cjs", "type": "module",
+  "license": "MIT",
+  "author": "Krishbot",
   "scripts": {
-    "dev": "npm run dev -w server & npm run dev -w web",
-    "build": "npm run build -w web && npm run build -w server",
-    "start": "npm run start -w server",
-    "typecheck": "npm run typecheck -w server && npm run typecheck -w web"
+    "start": "electron .",
+    "serve": "node src/server.js",
+    "icon": "node build/icon.mjs",
+    "dist": "npm run icon && electron-builder --publish never"
   },
-  "engines": { "node": ">=22" }
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "app.krishbot.desktop",
+    "productName": "Krishbot",
+    "files": ["main.cjs", "src/**", "public/**", "package.json", "build/icon.png"],
+    "directories": { "buildResources": "build", "output": "release" },
+    "linux": { "target": ["AppImage"], "category": "Utility", "artifactName": "Krishbot-${version}-linux-x64.${ext}" },
+    "win": { "target": ["portable"], "artifactName": "Krishbot-${version}-windows-x64.${ext}" },
+    "mac": { "target": ["dmg"], "identity": null, "category": "public.app-category.productivity", "artifactName": "Krishbot-${version}-mac-${arch}.${ext}" }
+  }
 }

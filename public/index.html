@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Krishbot</title>
+<style>
+:root{--bg:#fff;--fg:#1c1c1c;--mut:#6b7280;--bd:#e5e7eb;--pri:#4f46e5;--card:#f7f7f8}
+@media(prefers-color-scheme:dark){:root{--bg:#141417;--fg:#ececf0;--mut:#9aa0ab;--bd:#2b2b31;--card:#1d1d22}}
+*{box-sizing:border-box}body{margin:0;font:15px system-ui,sans-serif;background:var(--bg);color:var(--fg);display:flex;height:100vh}
+aside{width:220px;border-right:1px solid var(--bd);padding:12px;display:flex;flex-direction:column;gap:6px;overflow:auto}
+main{flex:1;display:flex;flex-direction:column;min-width:0}
+button,input,select,textarea{font:inherit;color:inherit;background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:8px 10px}
+button{cursor:pointer}button.p{background:var(--pri);color:#fff;border-color:var(--pri)}
+.bot{text-align:left}.bot.on{border-color:var(--pri)}
+#log{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+.m{max-width:80%;padding:9px 12px;border-radius:12px;white-space:pre-wrap;word-break:break-word}
+.user{align-self:flex-end;background:var(--pri);color:#fff}.assistant{background:var(--card)}
+.step{font-size:13px;color:var(--mut);border-left:3px solid var(--bd);padding-left:8px;white-space:pre-wrap;word-break:break-word}
+.ask{border:1px solid var(--pri);border-radius:10px;padding:10px}.err{color:#d33}
+form.c{display:flex;gap:8px;padding:12px;border-top:1px solid var(--bd)}form.c textarea{flex:1;resize:none;height:44px}
+#set{display:none;padding:16px;overflow:auto;flex:1}
+fieldset{border:1px solid var(--bd);border-radius:10px;margin:0 0 14px;padding:12px}legend{font-weight:600}
+fieldset label{display:block;margin:8px 0 2px;color:var(--mut);font-size:13px}fieldset input,fieldset select,fieldset textarea{width:100%}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+@media(max-width:700px){aside{width:130px}}
+</style></head><body>
+<aside><b>Krishbot</b><div id="bots"></div><button onclick="addBot()">+ New bot</button><button onclick="toggle()">⚙ Settings</button></aside>
+<main>
+<div id="chat" style="display:flex;flex-direction:column;flex:1;min-height:0">
+<div id="head" style="padding:10px 16px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between"><b id="title"></b><button onclick="clearChat()">Clear</button></div>
+<div id="log"></div>
+<form class="c" onsubmit="send(event)"><textarea id="in" placeholder="Message…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();this.form.requestSubmit()}"></textarea><button class="p" id="go">Send</button><button type="button" id="stop" style="display:none" onclick="ctl.abort()">Stop</button></form>
+</div>
+<div id="set"></div>
+</main>
+<script>
+const PRESETS=[
+ {label:'Ollama (local, free)',type:'openai',baseUrl:'http://localhost:11434/v1',model:'llama3.1',apiKey:''},
+ {label:'LM Studio (local, free)',type:'openai',baseUrl:'http://localhost:1234/v1',model:'local-model',apiKey:''},
+ {label:'Groq (free tier)',type:'openai',baseUrl:'https://api.groq.com/openai/v1',model:'llama-3.3-70b-versatile',apiKey:''},
+ {label:'OpenRouter (free models)',type:'openai',baseUrl:'https://openrouter.ai/api/v1',model:'meta-llama/llama-3.3-70b-instruct:free',apiKey:''},
+ {label:'Google Gemini (free tier)',type:'openai',baseUrl:'https://generativelanguage.googleapis.com/v1beta/openai',model:'gemini-2.0-flash',apiKey:''},
+ {label:'OpenAI',type:'openai',baseUrl:'https://api.openai.com/v1',model:'gpt-4o-mini',apiKey:''},
+ {label:'Anthropic API',type:'anthropic',baseUrl:'https://api.anthropic.com',model:'claude-sonnet-4-5',apiKey:''},
+ {label:'Any OpenAI-compatible API',type:'openai',baseUrl:'',model:'',apiKey:''},
+ {label:'My signed-in CLI: Claude Code (subscription)',type:'cli',command:'claude -p'},
+ {label:'My signed-in CLI: Codex (ChatGPT plan)',type:'cli',command:'codex exec -'},
+ {label:'My signed-in CLI: Gemini CLI (Google account)',type:'cli',command:'gemini -p " "'},
+ {label:'My own command (prompt on stdin)',type:'cli',command:''}];
+let cfg,cur,ctl=new AbortController();
+const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const J=(u,o)=>fetch(u,o).then(r=>r.json());
+const save=()=>J('/api/config',{method:'PUT',body:JSON.stringify(cfg)});
+const uid=()=>Math.random().toString(36).slice(2,9);
+async function init(){cfg=await J('/api/config');cur=cur&&cfg.bots.find(b=>b.id===cur)?cur:cfg.bots[0].id;renderBots();open_(cur);if(!cfg.providers.length)toggle(true)}
+function renderBots(){$('#bots').innerHTML=cfg.bots.map(b=>`<button class="bot ${b.id===cur?'on':''}" style="width:100%;margin-bottom:6px" onclick="open_('${b.id}')">${esc(b.name)}</button>`).join('')}
+async function open_(id){cur=id;toggle(false);renderBots();const b=cfg.bots.find(x=>x.id===id);$('#title').textContent=b.name;$('#log').innerHTML='';for(const m of await J('/api/chat/'+id))add(m.role,m.content)}
+function add(cls,t){const d=document.createElement('div');d.className=cls==='user'||cls==='assistant'?'m '+cls:cls;d.textContent=t;$('#log').append(d);$('#log').scrollTop=1e9;return d}
+async function send(e){e.preventDefault();const t=$('#in').value.trim();if(!t)return;$('#in').value='';add('user',t);ctl=new AbortController();$('#go').style.display='none';$('#stop').style.display='';
+ try{const r=await fetch('/api/chat/'+cur,{method:'POST',body:JSON.stringify({text:t}),signal:ctl.signal});const rd=r.body.getReader(),dec=new TextDecoder();let buf='';
+ for(;;){const{done,value}=await rd.read();if(done)break;buf+=dec.decode(value);let i;while((i=buf.indexOf('\n\n'))>=0){const l=buf.slice(0,i);buf=buf.slice(i+2);if(l.startsWith('data: '))ev(JSON.parse(l.slice(6)))}}}catch{}
+ $('#go').style.display='';$('#stop').style.display='none'}
+function ev(e){if(e.type==='text')add('assistant',e.text);else if(e.type==='tool')add('step','▶ '+e.name+' '+JSON.stringify(e.args));else if(e.type==='result')add('step','← '+e.text);
+ else if(e.type==='error')add('err',e.text);else if(e.type==='notice')add('step',e.text);
+ else if(e.type==='approval'){const d=add('ask','');d.innerHTML=`Allow <b>${esc(e.name)}</b>?<pre style="white-space:pre-wrap">${esc(JSON.stringify(e.args,null,2))}</pre>`;
+  for(const[l,ok]of[['Allow',true],['Deny',false]]){const b=document.createElement('button');b.textContent=l;b.className=ok?'p':'';b.style.marginRight='8px';b.onclick=()=>{J('/api/approve',{method:'POST',body:JSON.stringify({id:e.id,ok})});d.remove()};d.append(b)}}}
+async function clearChat(){await fetch('/api/chat/'+cur,{method:'DELETE'});$('#log').innerHTML=''}
+function addBot(){const b={id:uid(),name:'New bot',prompt:'You are a helpful assistant.',providerId:cfg.providers[0]?.id||'',tools:['files','web']};cfg.bots.push(b);save();cur=b.id;renderBots();open_(b.id);toggle(true)}
+function toggle(on){const s=$('#set');const show=on??s.style.display!=='block';s.style.display=show?'block':'none';$('#chat').style.display=show?'none':'flex';if(show)settings()}
+const chk=(arr,v)=>(arr||[]).includes(v)?'checked':'';
+function settings(){const b=cfg.bots.find(x=>x.id===cur);
+$('#set').innerHTML=`
+<fieldset><legend>Model connections</legend>${cfg.providers.map((p,i)=>`<div class="row" style="align-items:center"><b>${esc(p.name)}</b><span style="color:var(--mut)">${esc(p.type==='cli'?p.command:p.model)}</span><button onclick="cfg.providers.splice(${i},1);save();settings()">Remove</button></div>`).join('')||'<p style="color:var(--mut)">None yet. Add one below.</p>'}
+<label>Add</label><select id="pre"><option value="">Choose a service…</option>${PRESETS.map((p,i)=>`<option value="${i}">${esc(p.label)}</option>`).join('')}</select><div id="pf"></div></fieldset>
+<fieldset><legend>Bot: ${esc(b.name)}</legend>
+<label>Name</label><input value="${esc(b.name)}" onchange="B().name=this.value;save();renderBots()">
+<label>Instructions</label><textarea rows="4" onchange="B().prompt=this.value;save()">${esc(b.prompt)}</textarea>
+<label>Model connection</label><select onchange="B().providerId=this.value;save()">${cfg.providers.map(p=>`<option value="${p.id}" ${p.id===b.providerId?'selected':''}>${esc(p.name)}</option>`).join('')}</select>
+<label>Built-in tools</label><div class="row">${[['shell','Run commands'],['files','Files'],['web','Web search & fetch']].map(([k,l])=>`<label><input type="checkbox" style="width:auto" ${chk(b.tools,k)} onchange="tick('tools','${k}',this.checked)"> ${l}</label>`).join('')}</div>
+<label>Custom API tools</label><div class="row">${cfg.customTools.map(t=>`<label><input type="checkbox" style="width:auto" ${chk(b.customTools,t.name)} onchange="tick('customTools','${esc(t.name)}',this.checked)"> ${esc(t.name)}</label>`).join('')||'<span style="color:var(--mut)">none</span>'}</div>
+<label>MCP servers</label><div class="row">${cfg.mcpServers.map(t=>`<label><input type="checkbox" style="width:auto" ${chk(b.mcp,t.name)} onchange="tick('mcp','${esc(t.name)}',this.checked)"> ${esc(t.name)}</label>`).join('')||'<span style="color:var(--mut)">none</span>'}</div>
+<div class="row">${cfg.bots.length>1?'<button onclick="delBot()">Delete this bot</button>':''}</div></fieldset>
+<fieldset><legend>Custom API tools</legend>${cfg.customTools.map((t,i)=>`<div class="row" style="align-items:center"><b>${esc(t.name)}</b><span style="color:var(--mut)">${t.method} ${esc(t.url)}</span><button onclick="cfg.customTools.splice(${i},1);save();settings()">Remove</button></div>`).join('')}
+<label>Name (letters, digits, _)</label><input id="ct_n"><label>What it does</label><input id="ct_d">
+<label>Method</label><select id="ct_m"><option>GET</option><option>POST</option><option>PUT</option><option>DELETE</option></select>
+<label>URL — use {name} for inputs</label><input id="ct_u" placeholder="https://api.example.com/items/{id}">
+<label>Headers (one per line)</label><textarea id="ct_h" rows="2" placeholder="Authorization: Bearer YOUR_KEY"></textarea>
+<label>Body (JSON, optional)</label><textarea id="ct_b" rows="2" placeholder='{"q":"{query}"}'></textarea>
+<div class="row"><button class="p" onclick="addTool()">Add API tool</button></div></fieldset>
+<fieldset><legend>MCP servers</legend>${cfg.mcpServers.map((t,i)=>`<div class="row" style="align-items:center"><b>${esc(t.name)}</b><span style="color:var(--mut)">${esc(t.url||t.command+' '+(t.args||[]).join(' '))}</span><button onclick="testM(${i})">Test</button><button onclick="cfg.mcpServers.splice(${i},1);save();settings()">Remove</button></div>`).join('')}
+<label>Name</label><input id="mc_n"><label>Command (e.g. npx -y @modelcontextprotocol/server-filesystem /home/me) — or a URL</label><input id="mc_c"><label>Environment (KEY=value per line, optional)</label><textarea id="mc_e" rows="2"></textarea>
+<div class="row"><button class="p" onclick="addMcp()">Add MCP server</button></div><div id="mc_r" style="margin-top:8px;color:var(--mut)"></div></fieldset>
+<fieldset><legend>Safety</legend><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" style="width:auto" ${cfg.autoApprove?'checked':''} onchange="cfg.autoApprove=this.checked;save()"> Run actions without asking (commands, file writes, API changes)</label></fieldset>
+<fieldset><legend>About</legend>Krishbot is open source (MIT). Third-party components: Electron (MIT), Model Context Protocol SDK (MIT). Model providers named above are not affiliated with Krishbot.</fieldset>
+<button onclick="toggle(false)">Back to chat</button>`;
+$('#pre').onchange=e=>presetForm(PRESETS[e.target.value])}
+const B=()=>cfg.bots.find(x=>x.id===cur);
+function tick(k,v,on){const b=B();b[k]=(b[k]||[]).filter(x=>x!==v);if(on)b[k].push(v);save()}
+function delBot(){cfg.bots=cfg.bots.filter(b=>b.id!==cur);cur=cfg.bots[0].id;save();renderBots();open_(cur)}
+function presetForm(p){if(!p){$('#pf').innerHTML='';return}window._p=p;
+$('#pf').innerHTML=p.type==='cli'?`<label>Command</label><input id="f_c" value="${esc(p.command)}"><p style="color:var(--mut);font-size:13px">Uses the tool you already signed in to in a terminal, so it runs on your own plan. Install and sign in to it first. This mode answers in text only (no tool calls).</p>`
+:`<label>Base URL</label><input id="f_u" value="${esc(p.baseUrl)}"><label>Model</label><input id="f_m" value="${esc(p.model)}"><label>API key ${p.apiKey===''&&/localhost/.test(p.baseUrl)?'(not needed)':''}</label><input id="f_k" type="password">`;
+$('#pf').innerHTML+='<div class="row"><button class="p" onclick="addProv()">Add connection</button></div>'}
+function addProv(){const p=window._p,n={id:uid(),name:p.label.replace(/^My signed-in CLI: /,''),type:p.type};
+ if(p.type==='cli')n.command=$('#f_c').value.trim();else{n.baseUrl=$('#f_u').value.trim();n.model=$('#f_m').value.trim();n.apiKey=$('#f_k').value.trim()}
+ cfg.providers.push(n);for(const b of cfg.bots)if(!b.providerId)b.providerId=n.id;save();settings()}
+function addTool(){const t={name:$('#ct_n').value.trim().replace(/\W/g,'_'),description:$('#ct_d').value,method:$('#ct_m').value,url:$('#ct_u').value.trim(),headers:$('#ct_h').value,body:$('#ct_b').value};
+ if(!t.name||!t.url)return;t.params=[...new Set([...(t.url+t.body+t.headers).matchAll(/\{(\w+)\}/g)].map(m=>m[1]))].map(n=>({name:n,required:true}));cfg.customTools.push(t);save();settings()}
+function addMcp(){const n=$('#mc_n').value.trim(),c=$('#mc_c').value.trim();if(!n||!c)return;const env={};for(const l of $('#mc_e').value.split('\n')){const i=l.indexOf('=');if(i>0)env[l.slice(0,i).trim()]=l.slice(i+1).trim()}
+ const s=/^https?:\/\//.test(c)?{name:n,url:c}:{name:n,command:c.split(/\s+/)[0],args:c.split(/\s+/).slice(1),env};cfg.mcpServers.push(s);save();settings()}
+async function testM(i){$('#mc_r').textContent='Connecting…';const r=await J('/api/mcp/test',{method:'POST',body:JSON.stringify(cfg.mcpServers[i])});$('#mc_r').textContent=r.error?'Error: '+r.error:'Tools: '+r.tools.join(', ')}
+init();
+</script></body></html>
