@@ -5,6 +5,7 @@ import { botVars } from '../lib/colors';
 import { displayName, sortedRows, useSelectedBot, useStore } from '../store';
 import { useConfigUI } from '../configStore';
 import { Composer } from './Composer';
+import { VoiceCallBar } from './VoiceCallBar';
 import { Icon } from './Icon';
 import { Menu } from './Menu';
 import { Transcript } from './Transcript';
@@ -31,6 +32,7 @@ export function ChatView() {
 
   return (
     <main className="chat" style={botVars(bot.avatarColor)}>
+      <VoiceCallBar />
       <Transcript bot={bot} rows={rows} live={live} loaded={!!transcript?.loaded} />
       <Composer bot={bot} running={!!live?.isRunning} />
       <header className="chat__header">

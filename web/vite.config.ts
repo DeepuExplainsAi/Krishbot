@@ -7,7 +7,7 @@ const API = process.env.KRISHBOT_API ?? 'http://localhost:8787';
 export default defineConfig({
   plugins: [react()],
   resolve: {
-    alias: { '@shared': fileURLToPath(new URL('../shared', import.meta.url)) },
+    alias: { '@shared': fileURLToPath(new URL('../server/src', import.meta.url)) },
   },
   server: {
     port: 5173,

@@ -130,7 +130,6 @@ function StepRow({ call }: { call: ToolCallBody }) {
         <button type="button" className="step__row is-clickable" onClick={() => setOpen(!open)} aria-expanded={open} title={open ? 'Hide details' : 'Show details'}>{body}</button>
       ) : <div className="step__row">{body}</div>}
       {open && args && <pre className="step__args">{args}</pre>}
-      {call.screenshot && <img className="step__shot" src={call.screenshot} alt="" />}
     </li>
   );
 }

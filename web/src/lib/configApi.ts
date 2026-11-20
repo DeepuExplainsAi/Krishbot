@@ -26,9 +26,6 @@ export interface BotSettingsBundle {
 
 export interface LibraryListing { status: 'ok' | 'asleep' | 'error'; path: string; files: LibraryFile[]; error?: string }
 
-export interface ModelPreset { id: string; group: string; label: string; type: 'openai' | 'anthropic' | 'cli'; command?: string; baseUrl?: string; model?: string; models?: string[]; needsKey?: boolean; hint?: string; found?: boolean }
-export interface ModelConn { id: string; apiKey?: string; baseUrl?: string; model?: string; command?: string; trust?: boolean }
-export interface ModelsResponse { presets: ModelPreset[]; connections: ModelConn[] }
 
 export type BotPatch = Partial<Pick<Bot, 'name' | 'label' | 'description' | 'instructions' | 'avatarShape' | 'avatarColor' | 'effort' | 'mode'>>;
 
@@ -56,16 +53,14 @@ export const configApi = {
   downloadFile: (botId: string, path: string) => req<{ url: string }>('POST', `/bots/${botId}/files/download`, { path }),
 
   engine: (botId: string) => req<{ engine: EngineInfo }>('GET', `/bots/${botId}/engine`),
+  engineLogin: (botId: string, provider?: string) => req<{ ok: true; opened: boolean; command: string }>('POST', `/bots/${botId}/engine/login`, provider ? { provider } : {}),
+  restartEngine: (botId: string) => req<{ engine: EngineInfo }>('POST', `/bots/${botId}/engine/restart`),
   setEngine: (botId: string, p: { provider?: string | null; model?: string | null }) => req<{ engine: EngineInfo }>('PATCH', `/bots/${botId}/engine`, p),
 
   policies: () => req<{ policies: { tool: string; mode: string }[] }>('GET', '/policies'),
   deletePolicy: (tool: string) => req<{ ok: true }>('DELETE', `/policies/${encodeURIComponent(tool)}`),
 
   connectedApps: () => req<{ connectedApps?: Toolkit[]; connected: string[] }>('GET', '/apps?limit=1'),
-  getSettings: () => req<{ settings: { autoApprove: boolean; userName: string } }>('GET', '/settings'),
-  setSettings: (p: Partial<{ autoApprove: boolean; userName: string }>) => req<{ settings: { autoApprove: boolean; userName: string } }>('PATCH', '/settings', p),
-  models: () => req<ModelsResponse>('GET', '/models'),
-  saveModel: (id: string, v: Record<string, unknown>) => req<{ ok: true }>('PUT', `/models/${id}`, v),
-  removeModel: (id: string) => req<{ ok: true }>('DELETE', `/models/${id}`),
-  testModel: (v: Record<string, unknown>) => req<{ ok: true; reply: string }>('POST', '/models/test', v),
+  getSettings: () => req<{ settings: { autoApprove: boolean; userName: string; hasXaiKey?: boolean } }>('GET', '/settings'),
+  setSettings: (p: Partial<{ autoApprove: boolean; userName: string; xaiKey: string }>) => req<{ settings: { autoApprove: boolean; userName: string; hasXaiKey?: boolean } }>('PATCH', '/settings', p),
 };

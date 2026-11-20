@@ -8,11 +8,9 @@ import { Icon } from '../Icon';
 import { ToolkitLogo } from '../ToolkitLogo';
 import { Glyph } from './glyphs';
 import { Switch } from './ui';
-import { ModelsSection } from './ModelsSection';
 
 const SECTIONS: { id: AppSection; label: string }[] = [
   { id: 'general', label: 'General' },
-  { id: 'models', label: 'Models' },
   { id: 'permissions', label: 'Permissions' },
   { id: 'apps', label: 'Connected apps' },
   { id: 'about', label: 'About' },
@@ -44,7 +42,6 @@ export function AppSettings() {
         <button type="button" className="app-settings__close icon-btn" onClick={close} aria-label="Close settings" title="Close (Esc)"><Icon name="close" opacity={0.8} /></button>
         <div className="app-settings__page">
           {section === 'general' && <GeneralSection />}
-          {section === 'models' && <ModelsSection />}
           {section === 'permissions' && <PermissionsSection />}
           {section === 'apps' && <AppsSection />}
           {section === 'about' && <AboutSection />}
@@ -81,6 +78,10 @@ function ThemeTile({ value, label, current, onPick }: { value: Theme; label: str
 function GeneralSection() {
   const theme = useConfigUI((s) => s.theme);
   const setTheme = useConfigUI((s) => s.setTheme);
+  const [hasKey, setHasKey] = useState(false);
+  const [key, setKey] = useState('');
+  useEffect(() => { configApi.getSettings().then((r) => setHasKey(!!r.settings.hasXaiKey)).catch(() => {}); }, []);
+  const saveKey = () => configApi.setSettings({ xaiKey: key.trim() }).then((r) => { setHasKey(!!r.settings.hasXaiKey); setKey(''); }).catch(() => {});
   return (
     <>
       <PageHead title="General" />
@@ -92,6 +93,19 @@ function GeneralSection() {
           <ThemeTile value="dark" label="Dark" current={theme} onPick={setTheme} />
         </div>
         <div className="cfg-field__hint">System follows your device’s light or dark setting.</div>
+      </section>
+      <section className="cfg-section">
+        <div className="cfg-section__label">Voice and research</div>
+        <div className="cfg-card">
+          <div className="cfg-row">
+            <div className="cfg-row__text">
+              <div className="cfg-row__title">Voice and research key</div>
+              <div className="cfg-row__sub">Optional. Your own key, kept on this computer. Turns on voice chat, dictation and X research. {hasKey ? 'A key is saved.' : 'No key yet.'}</div>
+            </div>
+            <input className="text-input" type="password" style={{ maxWidth: 200 }} value={key} placeholder={hasKey ? '••••••••' : 'Paste key'} onChange={(e) => setKey(e.target.value)} aria-label="Voice and research key" />
+            <button type="button" className="cfg-btn cfg-btn--secondary" disabled={!key.trim()} onClick={saveKey}>Save</button>
+          </div>
+        </div>
       </section>
     </>
   );

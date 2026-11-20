@@ -8,25 +8,40 @@
   "license": "SEE LICENSE IN LICENSE",
   "author": "Krishbot",
   "scripts": {
-    "start": "electron .",
-    "serve": "node src/server.js",
+    "start": "npm run build:server && electron-builder install-app-deps && electron .",
+    "serve": "node server/dist/index.js",
+    "dev": "tsx watch server/src/index.ts",
+    "typecheck": "tsc -p server/tsconfig.json --noEmit && tsc -p web/tsconfig.json --noEmit",
     "icon": "node build/icon.mjs",
-    "dist": "npm run build && npm run icon && electron-builder --publish never",
-    "build": "npm --prefix web install --no-audit --no-fund && npm --prefix web run build"
+    "build:server": "tsc -p server/tsconfig.json",
+    "build:web": "npm --prefix web install --no-audit --no-fund && npm --prefix web run build",
+    "build": "npm run build:server && npm run build:web",
+    "dist": "npm run build && npm run icon && electron-builder --publish never"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.12.0"
+    "@hono/node-server": "^2.1.6",
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "better-sqlite3": "^13.0.3",
+    "croner": "^11.0.0",
+    "hono": "^4.13.17",
+    "openai": "^7.53.0",
+    "yaml": "^2.9.1",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^22.10.2",
     "electron": "^33.2.0",
-    "electron-builder": "^25.1.8"
+    "electron-builder": "^25.1.8",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
   },
   "build": {
     "appId": "app.krishbot.desktop",
     "productName": "Krishbot",
     "files": [
       "main.cjs",
-      "src/**",
+      "server/dist/**",
       "web/dist/**",
       "package.json",
       "build/icon.png"
@@ -55,6 +70,8 @@
       "identity": null,
       "category": "public.app-category.productivity",
       "artifactName": "Krishbot-${version}-mac-${arch}.${ext}"
-    }
+    },
+    "asar": false,
+    "npmRebuild": true
   }
 }

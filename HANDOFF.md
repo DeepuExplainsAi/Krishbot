@@ -48,15 +48,14 @@ Keep **everything from the old app** (commit `870fbcd`, `server/src` ~281 KB): U
 Everything must still work free, locally, on the user's own subscriptions/keys.
 
 ## Status of that rule
-NOT done yet. The current `src/*.js` backend (about 930 lines) is a fresh small rewrite that only covers part of the old API. It does NOT contain the old Hermes harness, sub-agents, rooms logic, proactive/triggers, desk, engine-memory, voice, etc. Voice and the Hermes engine panel were removed from the UI in the last commit; they must come back.
-Plan: port the old `server/src` (TypeScript) into this repo file by file, replacing Orgo/computer with local execution (shell, files, local browser/desktop), replacing hosted auth with a local single user, keeping the old routes and data model. Check each old file against the new tree and tick it off here.
+DONE on branch `full-port` (see below). The old `server/src` TypeScript app is back, made local-only.
 
-### Findings from auditing the old server (870fbcd, `server/src` 390 KB incl. `server/box`)
-The old app already ran locally on one machine (`HQ_LOCAL=1`, SQLite, Hono). Real cloud ties are only: Orgo (`orgo.ts`, `vnc.ts` relay, `routes.ts` screenshot/export, remote mode of `box.ts`), Composio (`composio.ts`, `triggers.ts`, Google sign-in via Composio), xAI (`voice.ts`, `x_search` in `agent/tools.ts`), public URL (`APP_URL`/`SERVER_URL`).
-Hermes harness = external CLI + local HTTP gateway (`engine.ts`): primary at `127.0.0.1:8642`; managed bots spawn `hermes gateway run --no-supervise` with own `HERMES_HOME` and port 8650+; turns are `POST /v1/responses` (SSE) in `agent/loop.ts`; models via `GET /api/model/options`; sign-in runs `hermes auth add` / `hermes model` in a terminal. The app exposes its own tools to Hermes through MCP at `/mcp/<bot>` (`mcp.ts`, `agent/tools.ts`). Hermes cannot be bundled in the installer; it must be installed by the user.
+- Removed cloud parts: `orgo.ts`, `vnc.ts`, `composio.ts`, `idle.ts`, `desk.ts`, `computer.ts`, Google/hosted auth, screen/viewer UI, `server/box`.
+- Replaced with local: `env.ts` (data dir `~/.krishbot`), `lib/auth.ts` (single local user, 127.0.0.1 + same-origin checks), `apps.ts` (npx MCP catalog + custom MCP/web API apps, keys in the local DB), `triggers.ts` (webhook event routines at `/hooks/<secret>`), `terminal.ts` (model sign-in in a terminal window), `settings.ts` (voice/research key, auto-approve).
+- Kept: Hermes harness (`engine.ts`), sub-agents, rooms, proactive, routines, memory, MCP, config routes, voice, skills, library, old Composer and Engine panel.
+- Names of other developers/companies removed from README, SECURITY, ARCHITECTURE, UI text. Left on purpose: the MIT notices in `THIRD_PARTY_NOTICES.md` (the licenses require them), the `hermes` CLI name, internal voice API identifiers, and `XAI_*` env names.
+- Dark mode: black bot avatar now `--color-avatar-black` (grey in dark), `--color-border` defined, `color-scheme` set per theme (native selects/scrollbars), select options, draft-card and toolkit logo colors fixed. Found by static audit; no screenshots were possible on the 482 MB VM, so check once by eye.
+- Packaging: root `package.json` holds server + Electron deps; `main.cjs` starts the compiled server on a free local port and opens a window. `npmRebuild` rebuilds `better-sqlite3` for Electron in `npm run dist`.
 
-Keep as-is (pure local): `routes-rooms`, `routes-proactive`, `routes-config` (minus export/sign-in), `engine`, `engine-memory`, `mcp`, `proactive`, `routines`, `store`, `types`, `db`, `db-config`, `agent/{loop,tools,prompt,subagents,rooms}`, `lib/{auth,hub,ids}`, `box.ts` (local mode only), `paths`, `avatar-shapes`, `scripts/add-hq-to-hermes.py`.
-Replace with local: `orgo.ts`/`computer.ts`/`vnc.ts`/`desk.ts`/`idle.ts` -> local desktop (screenshot/input on the user's own PC; Linux box scripts `server/box/*.py` are X11-only); `composio.ts`/`triggers.ts` -> local MCP/key apps + local polling/webhooks; Google sign-in -> single local user (`/api/auth/dev` style); `voice.ts` -> decision pending (xAI key by the user, or local STT/TTS).
-
-### Port checklist (old file -> status)
-All TODO. Old files list: `git ls-tree -r 870fbcd --name-only | grep server/`.
+## Still unverified (needs a real machine)
+Installers from the release workflow, real Hermes sign-in per provider, voice with a real key, group chats against a live agent, npx apps (need Node.js), the dark mode look.

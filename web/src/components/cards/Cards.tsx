@@ -149,7 +149,7 @@ export function DraftCard({ body }: { body: Card<'draft'> }) {
   return (
     <div className={`card draft-card${pending ? '' : ' is-resolved'}`}>
       <div className="draft-card__head">
-        <span className="draft-card__tile"><Icon name="chat_filled" size={18} color="#FFFFFF" /></span>
+        <span className="draft-card__tile"><Icon name="chat_filled" size={18} color="var(--color-on-primary)" /></span>
         <div className="draft-card__titles">
           <div className="draft-card__channel">{CHANNEL_LABEL[body.channel] ?? 'Message'}</div>
           <div className="draft-card__from">{handle}</div>
