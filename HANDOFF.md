@@ -51,5 +51,12 @@ Everything must still work free, locally, on the user's own subscriptions/keys.
 NOT done yet. The current `src/*.js` backend (about 930 lines) is a fresh small rewrite that only covers part of the old API. It does NOT contain the old Hermes harness, sub-agents, rooms logic, proactive/triggers, desk, engine-memory, voice, etc. Voice and the Hermes engine panel were removed from the UI in the last commit; they must come back.
 Plan: port the old `server/src` (TypeScript) into this repo file by file, replacing Orgo/computer with local execution (shell, files, local browser/desktop), replacing hosted auth with a local single user, keeping the old routes and data model. Check each old file against the new tree and tick it off here.
 
+### Findings from auditing the old server (870fbcd, `server/src` 390 KB incl. `server/box`)
+The old app already ran locally on one machine (`HQ_LOCAL=1`, SQLite, Hono). Real cloud ties are only: Orgo (`orgo.ts`, `vnc.ts` relay, `routes.ts` screenshot/export, remote mode of `box.ts`), Composio (`composio.ts`, `triggers.ts`, Google sign-in via Composio), xAI (`voice.ts`, `x_search` in `agent/tools.ts`), public URL (`APP_URL`/`SERVER_URL`).
+Hermes harness = external CLI + local HTTP gateway (`engine.ts`): primary at `127.0.0.1:8642`; managed bots spawn `hermes gateway run --no-supervise` with own `HERMES_HOME` and port 8650+; turns are `POST /v1/responses` (SSE) in `agent/loop.ts`; models via `GET /api/model/options`; sign-in runs `hermes auth add` / `hermes model` in a terminal. The app exposes its own tools to Hermes through MCP at `/mcp/<bot>` (`mcp.ts`, `agent/tools.ts`). Hermes cannot be bundled in the installer; it must be installed by the user.
+
+Keep as-is (pure local): `routes-rooms`, `routes-proactive`, `routes-config` (minus export/sign-in), `engine`, `engine-memory`, `mcp`, `proactive`, `routines`, `store`, `types`, `db`, `db-config`, `agent/{loop,tools,prompt,subagents,rooms}`, `lib/{auth,hub,ids}`, `box.ts` (local mode only), `paths`, `avatar-shapes`, `scripts/add-hq-to-hermes.py`.
+Replace with local: `orgo.ts`/`computer.ts`/`vnc.ts`/`desk.ts`/`idle.ts` -> local desktop (screenshot/input on the user's own PC; Linux box scripts `server/box/*.py` are X11-only); `composio.ts`/`triggers.ts` -> local MCP/key apps + local polling/webhooks; Google sign-in -> single local user (`/api/auth/dev` style); `voice.ts` -> decision pending (xAI key by the user, or local STT/TTS).
+
 ### Port checklist (old file -> status)
 All TODO. Old files list: `git ls-tree -r 870fbcd --name-only | grep server/`.
