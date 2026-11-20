@@ -2,6 +2,7 @@ import { exec } from 'node:child_process';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
+import { addMemory } from './store.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
@@ -84,6 +85,10 @@ const slug = (s) => s.replace(/[^\w]/g, '_').slice(0, 24);
 export async function toolsFor(bot, cfg) {
   const out = [], errors = [];
   for (const group of bot.tools || []) out.push(...(BUILTIN[group] || []));
+  if ((bot.tools || []).includes('memory')) out.push({
+    name: 'save_memory', description: 'Remember a fact or preference about the user or their work for future chats. One short sentence.',
+    parameters: obj({ text: str('What to remember') }, ['text']), run: ({ text }) => { addMemory(bot.id, text); return 'Saved.'; },
+  });
   for (const t of cfg.customTools || []) if ((bot.customTools || []).includes(t.name)) out.push(customTool(t));
   for (const s of cfg.mcpServers || []) {
     if (!(bot.mcp || []).includes(s.name)) continue;

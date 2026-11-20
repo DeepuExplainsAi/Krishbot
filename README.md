@@ -35,4 +35,4 @@ npm run serve      # same UI in a browser, URL printed in the console
 Releases: GitHub Actions → "Release" builds all three systems and updates the `latest` release.
 
 ## License
-MIT, Copyright (c) 2026 Krishbot, DeepuExplainsAi. See `LICENSE` and `THIRD_PARTY_NOTICES.md`.
+Krishbot License (free to use, no resale or redistribution), Copyright (c) 2026 Krishbot, DeepuExplainsAi. See `LICENSE` and `THIRD_PARTY_NOTICES.md`.

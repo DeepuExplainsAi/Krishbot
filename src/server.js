@@ -3,7 +3,8 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { getConfig, saveConfig, getChat, clearChat } from './store.js';
+import { getConfig, saveConfig, getChat, clearChat, getRoutineState, saveRoutineState } from './store.js';
+import { CATALOG } from './catalog.js';
 import { runTurn, answerApproval } from './agent.js';
 import { testMcp } from './tools.js';
 
@@ -16,6 +17,7 @@ const json = (res, data, code = 200) => { res.writeHead(code, { 'content-type': 
 
 async function api(req, res, url) {
   const m = req.method, p = url.pathname;
+  if (m === 'GET' && p === '/api/catalog') return json(res, CATALOG);
   if (m === 'GET' && p === '/api/config') return json(res, getConfig());
   if (m === 'PUT' && p === '/api/config') { saveConfig(await body(req)); return json(res, { ok: true }); }
   if (m === 'POST' && p === '/api/approve') { const b = await body(req); answerApproval(String(b.id), !!b.ok); return json(res, { ok: true }); }
@@ -36,7 +38,25 @@ async function api(req, res, url) {
   json(res, { error: 'not found' }, 404);
 }
 
+// Routines: {id, botId, prompt, mode:'every'|'daily', every:minutes, time:'HH:MM'}. Actions needing approval are declined when nobody is watching.
+async function tickRoutines() {
+  const cfg = getConfig(), state = getRoutineState(), now = Date.now(), d = new Date();
+  for (const r of cfg.routines || []) {
+    const last = state[r.id] || 0;
+    let due = false;
+    if (r.mode === 'daily') {
+      const [h, m] = String(r.time || '09:00').split(':').map(Number);
+      const at = new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, m).getTime();
+      due = now >= at && last < at;
+    } else due = now - last >= Math.max(1, Number(r.every) || 60) * 60_000;
+    if (!due) continue;
+    state[r.id] = now; saveRoutineState(state);
+    runTurn(r.botId, r.prompt, (e) => { if (e.type === 'approval') answerApproval(e.id, false); }, new AbortController().signal).catch(() => {});
+  }
+}
+
 export function start(port = 0) {
+  setInterval(() => tickRoutines().catch(() => {}), 30_000).unref();
   const server = http.createServer(async (req, res) => {
     try {
       const url = new URL(req.url, 'http://x');

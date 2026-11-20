@@ -73,7 +73,7 @@ $('#set').innerHTML=`
 <label>Name</label><input value="${esc(b.name)}" onchange="B().name=this.value;save();renderBots()">
 <label>Instructions</label><textarea rows="4" onchange="B().prompt=this.value;save()">${esc(b.prompt)}</textarea>
 <label>Model connection</label><select onchange="B().providerId=this.value;save()">${cfg.providers.map(p=>`<option value="${p.id}" ${p.id===b.providerId?'selected':''}>${esc(p.name)}</option>`).join('')}</select>
-<label>Built-in tools</label><div class="row">${[['shell','Run commands'],['files','Files'],['web','Web search & fetch']].map(([k,l])=>`<label><input type="checkbox" style="width:auto" ${chk(b.tools,k)} onchange="tick('tools','${k}',this.checked)"> ${l}</label>`).join('')}</div>
+<label>Built-in tools</label><div class="row">${[['shell','Run commands'],['files','Files'],['web','Web search & fetch'],['memory','Long-term memory'],['team','Ask other bots']].map(([k,l])=>`<label><input type="checkbox" style="width:auto" ${chk(b.tools,k)} onchange="tick('tools','${k}',this.checked)"> ${l}</label>`).join('')}</div>
 <label>Custom API tools</label><div class="row">${cfg.customTools.map(t=>`<label><input type="checkbox" style="width:auto" ${chk(b.customTools,t.name)} onchange="tick('customTools','${esc(t.name)}',this.checked)"> ${esc(t.name)}</label>`).join('')||'<span style="color:var(--mut)">none</span>'}</div>
 <label>MCP servers</label><div class="row">${cfg.mcpServers.map(t=>`<label><input type="checkbox" style="width:auto" ${chk(b.mcp,t.name)} onchange="tick('mcp','${esc(t.name)}',this.checked)"> ${esc(t.name)}</label>`).join('')||'<span style="color:var(--mut)">none</span>'}</div>
 <div class="row">${cfg.bots.length>1?'<button onclick="delBot()">Delete this bot</button>':''}</div></fieldset>
@@ -87,8 +87,12 @@ $('#set').innerHTML=`
 <fieldset><legend>MCP servers</legend>${cfg.mcpServers.map((t,i)=>`<div class="row" style="align-items:center"><b>${esc(t.name)}</b><span style="color:var(--mut)">${esc(t.url||t.command+' '+(t.args||[]).join(' '))}</span><button onclick="testM(${i})">Test</button><button onclick="cfg.mcpServers.splice(${i},1);save();settings()">Remove</button></div>`).join('')}
 <label>Name</label><input id="mc_n"><label>Command (e.g. npx -y @modelcontextprotocol/server-filesystem /home/me) — or a URL</label><input id="mc_c"><label>Environment (KEY=value per line, optional)</label><textarea id="mc_e" rows="2"></textarea>
 <div class="row"><button class="p" onclick="addMcp()">Add MCP server</button></div><div id="mc_r" style="margin-top:8px;color:var(--mut)"></div></fieldset>
+<fieldset><legend>Add apps in one click (MCP)</legend><div id="cat" style="color:var(--mut)">Loading…</div></fieldset>
+<fieldset><legend>Routines (run automatically while Krishbot is open)</legend>${(cfg.routines||[]).map((r,i)=>`<div class="row" style="align-items:center"><b>${esc((cfg.bots.find(x=>x.id===r.botId)||{}).name||'?')}</b><span style="color:var(--mut)">${r.mode==='daily'?'daily '+esc(r.time):'every '+r.every+' min'}: ${esc(r.prompt)}</span><button onclick="cfg.routines.splice(${i},1);save();settings()">Remove</button></div>`).join('')}
+<label>Task for the current bot</label><input id="rt_p"><label>Repeat</label><select id="rt_m"><option value="daily">Daily at a time</option><option value="every">Every N minutes</option></select>
+<label>Time (HH:MM) or minutes</label><input id="rt_v" value="09:00"><div class="row"><button class="p" onclick="addRoutine()">Add routine</button></div><p style="color:var(--mut);font-size:13px">Routines can't ask for permission, so risky actions run only if "Run actions without asking" is on.</p></fieldset>
 <fieldset><legend>Safety</legend><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" style="width:auto" ${cfg.autoApprove?'checked':''} onchange="cfg.autoApprove=this.checked;save()"> Run actions without asking (commands, file writes, API changes)</label></fieldset>
-<fieldset><legend>About</legend>Krishbot is open source (MIT). Copyright © 2026 Krishbot, DeepuExplainsAi. Third-party components: Electron (MIT), Model Context Protocol SDK (MIT). Model providers named above are not affiliated with Krishbot.</fieldset>
+<fieldset><legend>About</legend>Krishbot is free to use. See LICENSE. Copyright © 2026 Krishbot, DeepuExplainsAi. Third-party components: Electron (MIT), Model Context Protocol SDK (MIT). Model providers named above are not affiliated with Krishbot.</fieldset>
 <button onclick="toggle(false)">Back to chat</button>`;
 $('#pre').onchange=e=>presetForm(PRESETS[e.target.value])}
 const B=()=>cfg.bots.find(x=>x.id===cur);
@@ -106,5 +110,12 @@ function addTool(){const t={name:$('#ct_n').value.trim().replace(/\W/g,'_'),desc
 function addMcp(){const n=$('#mc_n').value.trim(),c=$('#mc_c').value.trim();if(!n||!c)return;const env={};for(const l of $('#mc_e').value.split('\n')){const i=l.indexOf('=');if(i>0)env[l.slice(0,i).trim()]=l.slice(i+1).trim()}
  const s=/^https?:\/\//.test(c)?{name:n,url:c}:{name:n,command:c.split(/\s+/)[0],args:c.split(/\s+/).slice(1),env};cfg.mcpServers.push(s);save();settings()}
 async function testM(i){$('#mc_r').textContent='Connecting…';const r=await J('/api/mcp/test',{method:'POST',body:JSON.stringify(cfg.mcpServers[i])});$('#mc_r').textContent=r.error?'Error: '+r.error:'Tools: '+r.tools.join(', ')}
+function addRoutine(){const p=$('#rt_p').value.trim(),m=$('#rt_m').value,v=$('#rt_v').value.trim();if(!p)return;(cfg.routines=cfg.routines||[]).push({id:uid(),botId:cur,prompt:p,mode:m,time:m==='daily'?v:undefined,every:m==='every'?Number(v)||60:undefined});save();settings()}
+async function loadCat(){const el=$('#cat');if(!el)return;const cat=await J('/api/catalog');el.innerHTML=cat.map((c,i)=>`<div class="row" style="align-items:center"><span style="flex:1;color:var(--fg)">${esc(c.label)}</span><button onclick="addCat(${i})">Add</button></div>`).join('');window._cat=cat}
+function addCat(i){const c=window._cat[i],env={};let args=[...c.args];
+ for(const a of c.ask||[]){const v=prompt('Enter '+a+':');if(!v)return;args=args.map(x=>x.replace('{'+a+'}',v))}
+ for(const k of c.env){const v=prompt(k+':');if(!v)return;env[k]=v}
+ if(cfg.mcpServers.some(s=>s.name===c.key))return alert('Already added');cfg.mcpServers.push({name:c.key,command:c.command,args,env});B().mcp=[...(B().mcp||[]),c.key];save();settings()}
+const _settings=settings;settings=function(){_settings();loadCat()};
 init();
 </script></body></html>

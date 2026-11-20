@@ -1,4 +1,7 @@
 import { spawn } from 'node:child_process';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
 // One call to a model. Returns { text, toolCalls: [{id,name,args}] }.
 // `messages` use one neutral shape: {role:'user'|'assistant'|'tool', content, toolCalls?, toolCallId?, name?}
@@ -52,11 +55,21 @@ async function anthropic(p, system, messages, tools) {
 }
 
 // A command-line assistant you already signed in to (your own subscription). The prompt goes to stdin.
-function cli(p, system, messages) {
+function cli(p, system, messages, opts = {}) {
   const transcript = messages.filter((m) => m.role !== 'tool').map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`).join('\n\n');
   const prompt = `${system}\n\n${transcript}\n\nAssistant:`;
   return new Promise((resolve, reject) => {
-    const child = spawn(p.command, { shell: true, env: process.env });
+    let command = p.command;
+    if (/^\s*claude\b/.test(command)) { // Claude Code is itself an agent: hand it this bot's MCP servers (and the approval choice)
+      const servers = Object.fromEntries((opts.mcpServers || []).map((s) => [s.name, s.url ? { type: 'http', url: s.url, headers: s.headers || {} } : { command: s.command, args: s.args || [], env: s.env || {} }]));
+      if (Object.keys(servers).length) {
+        const f = path.join(os.tmpdir(), `krishbot-mcp-${process.pid}.json`);
+        fs.writeFileSync(f, JSON.stringify({ mcpServers: servers }), { mode: 0o600 });
+        command += ` --mcp-config "${f}"`;
+      }
+      if (opts.autoApprove) command += ' --dangerously-skip-permissions';
+    }
+    const child = spawn(command, { shell: true, env: process.env });
     let out = '', err = '';
     child.stdout.on('data', (d) => (out += d));
     child.stderr.on('data', (d) => (err += d));
@@ -68,9 +81,9 @@ function cli(p, system, messages) {
 
 function safeJson(s) { try { return JSON.parse(s || '{}'); } catch { return {}; } }
 
-export function callModel(p, system, messages, tools) {
+export function callModel(p, system, messages, tools, opts) {
   if (!p) throw new Error('No model connection is set for this bot. Open Settings, add a connection, and pick it for the bot.');
   if (p.type === 'anthropic') return anthropic(p, system, messages, tools);
-  if (p.type === 'cli') return cli(p, system, messages);
+  if (p.type === 'cli') return cli(p, system, messages, opts);
   return openai(p, system, messages, tools);
 }

@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "Krishbot: your own AI agents on your own computer.",
   "main": "main.cjs", "type": "module",
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE",
   "author": "Krishbot",
   "scripts": {
     "start": "electron .",
