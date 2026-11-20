@@ -40,3 +40,16 @@ Cloud computer viewer/noVNC, computer sleep/wake, Google sign-in (UI always sign
 
 ## Dev
 `npm install && npm run build && npm run serve` (prints URL with token), or `npm start` for Electron. UI dev: `cd web && npm run dev` (proxies `/api` to :8787; needs the token cookie from the printed URL). Release: Actions → Release → Run workflow. The VM used so far has 482MB RAM: builds and Chromium need swap.
+
+## OWNER'S RULE (latest, overrides everything above)
+Keep **everything from the old app** (commit `870fbcd`, `server/src` ~281 KB): UI AND backend, including the Hermes agent harness, sub-agents, rooms, proactive/triggers, routines, memory/engine-memory, MCP, desk, config routes, voice, skills, library, etc. Remove ONLY:
+1. the cloud server parts (hosted server, Orgo cloud computer, Google/hosted auth, hosted-only services). Their jobs must run on the user's own computer instead;
+2. the names of other developers/companies (README, UI text, docs, licenses of ours).
+Everything must still work free, locally, on the user's own subscriptions/keys.
+
+## Status of that rule
+NOT done yet. The current `src/*.js` backend (about 930 lines) is a fresh small rewrite that only covers part of the old API. It does NOT contain the old Hermes harness, sub-agents, rooms logic, proactive/triggers, desk, engine-memory, voice, etc. Voice and the Hermes engine panel were removed from the UI in the last commit; they must come back.
+Plan: port the old `server/src` (TypeScript) into this repo file by file, replacing Orgo/computer with local execution (shell, files, local browser/desktop), replacing hosted auth with a local single user, keeping the old routes and data model. Check each old file against the new tree and tick it off here.
+
+### Port checklist (old file -> status)
+All TODO. Old files list: `git ls-tree -r 870fbcd --name-only | grep server/`.
