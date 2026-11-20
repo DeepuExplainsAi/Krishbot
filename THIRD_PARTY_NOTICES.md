@@ -12,3 +12,6 @@ Optional MCP servers, fetched on demand with npx (not bundled):
 - @playwright/mcp: Copyright (c) Microsoft Corporation (Apache-2.0)
 - @modelcontextprotocol/server-filesystem, -memory, -sequential-thinking, -github, -slack: Anthropic, PBC and contributors (MIT)
 - @notionhq/notion-mcp-server: Notion Labs (MIT)
+
+## UI (bundled in the app)
+React, ReactDOM, zustand, react-markdown, remark-gfm, lucide-react (MIT/ISC). Built with Vite (MIT).

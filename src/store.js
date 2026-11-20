@@ -1,38 +1,47 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import crypto from 'node:crypto';
 
 export const dataDir = process.env.KRISHBOT_DATA || path.join(os.homedir(), '.krishbot');
-fs.mkdirSync(path.join(dataDir, 'chats'), { recursive: true });
-const cfgFile = path.join(dataDir, 'config.json');
+export const libraryDir = (botId) => path.join(dataDir, 'library', safe(botId));
+fs.mkdirSync(path.join(dataDir, 'rows'), { recursive: true });
 
-const DEFAULT = {
-  autoApprove: false,
-  providers: [],
-  bots: [{ id: 'main', name: 'Krishbot', prompt: 'You are Krishbot, a helpful assistant working on the user\'s own computer. Use tools when they help. Be concise.', providerId: '', tools: ['shell', 'files', 'web', 'memory'] }],
-  customTools: [],
-  mcpServers: [],
-  routines: [],
-};
+export const uid = (prefix = '') => prefix + crypto.randomBytes(6).toString('hex');
+export const now = () => Date.now();
+export function safe(id) { return String(id).replace(/[^\w-]/g, '_'); }
 
-const write = (file, data) => { fs.writeFileSync(file + '.tmp', JSON.stringify(data, null, 2), { mode: 0o600 }); fs.renameSync(file + '.tmp', file); };
-
-export function getConfig() {
-  try { return { ...DEFAULT, ...JSON.parse(fs.readFileSync(cfgFile, 'utf8')) }; } catch { return structuredClone(DEFAULT); }
+function writeFile(file, data) {
+  fs.writeFileSync(file + '.tmp', JSON.stringify(data), { mode: 0o600 });
+  fs.renameSync(file + '.tmp', file);
 }
-export const saveConfig = (c) => write(cfgFile, c);
+function readFile(file, fallback) {
+  try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return fallback; }
+}
 
-const chatFile = (id) => path.join(dataDir, 'chats', `${id.replace(/[^\w-]/g, '_')}.json`);
-export function getChat(id) { try { return JSON.parse(fs.readFileSync(chatFile(id), 'utf8')); } catch { return []; } }
-export const saveChat = (id, msgs) => write(chatFile(id), msgs);
-export const clearChat = (id) => fs.rmSync(chatFile(id), { force: true });
+// ---- app state: one JSON file ----
+const stateFile = path.join(dataDir, 'state.json');
+const fresh = () => ({
+  settings: { autoApprove: false, userName: '' },
+  connections: [], // model connections
+  apps: {},        // connected catalog apps: slug -> { values }
+  customApps: [],  // user-made MCP servers / HTTP APIs
+  bots: [], members: {}, memories: [], skills: [], routines: [], tasks: [], policies: [],
+  compaction: {},
+});
+export const state = { ...fresh(), ...readFile(stateFile, {}) };
+let timer;
+export const save = () => { clearTimeout(timer); timer = setTimeout(flush, 200); };
+export function flush() { clearTimeout(timer); writeFile(stateFile, state); for (const id of dirty) writeFile(rowsFile(id), cache.get(id)); dirty.clear(); }
+process.on('exit', () => { try { flush(); } catch { /* shutting down */ } });
 
-const safe = (id) => id.replace(/[^\w-]/g, '_');
-fs.mkdirSync(path.join(dataDir, 'memory'), { recursive: true });
-const memFile = (id) => path.join(dataDir, 'memory', `${safe(id)}.md`);
-export const getMemory = (id) => { try { return fs.readFileSync(memFile(id), 'utf8'); } catch { return ''; } };
-export const addMemory = (id, text) => fs.appendFileSync(memFile(id), `- ${text.replace(/\n+/g, ' ')}\n`);
-
-const stateFile = path.join(dataDir, 'routines-state.json');
-export const getRoutineState = () => { try { return JSON.parse(fs.readFileSync(stateFile, 'utf8')); } catch { return {}; } };
-export const saveRoutineState = (s) => write(stateFile, s);
+// ---- transcripts: rows (what the window shows) + llm (what the model sees), per bot ----
+const rowsFile = (id) => path.join(dataDir, 'rows', `${safe(id)}.json`);
+const cache = new Map();
+const dirty = new Set();
+export function transcript(botId) {
+  if (!cache.has(botId)) cache.set(botId, readFile(rowsFile(botId), { generation: 1, nextSeq: 1, updated: 0, rows: [], llm: [] }));
+  return cache.get(botId);
+}
+export function saveTranscript(botId) { dirty.add(botId); save(); }
+export function dropTranscript(botId) { cache.delete(botId); dirty.delete(botId); fs.rmSync(rowsFile(botId), { force: true }); }

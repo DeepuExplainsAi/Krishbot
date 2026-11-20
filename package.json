@@ -3,14 +3,16 @@
   "productName": "Krishbot",
   "version": "1.0.0",
   "description": "Krishbot: your own AI agents on your own computer.",
-  "main": "main.cjs", "type": "module",
+  "main": "main.cjs",
+  "type": "module",
   "license": "SEE LICENSE IN LICENSE",
   "author": "Krishbot",
   "scripts": {
     "start": "electron .",
     "serve": "node src/server.js",
     "icon": "node build/icon.mjs",
-    "dist": "npm run icon && electron-builder --publish never"
+    "dist": "npm run build && npm run icon && electron-builder --publish never",
+    "build": "npm --prefix web install --no-audit --no-fund && npm --prefix web run build"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0"
@@ -22,10 +24,37 @@
   "build": {
     "appId": "app.krishbot.desktop",
     "productName": "Krishbot",
-    "files": ["main.cjs", "src/**", "public/**", "package.json", "build/icon.png"],
-    "directories": { "buildResources": "build", "output": "release" },
-    "linux": { "target": ["AppImage"], "category": "Utility", "artifactName": "Krishbot-${version}-linux-x64.${ext}" },
-    "win": { "target": ["portable"], "artifactName": "Krishbot-${version}-windows-x64.${ext}" },
-    "mac": { "target": ["dmg"], "identity": null, "category": "public.app-category.productivity", "artifactName": "Krishbot-${version}-mac-${arch}.${ext}" }
+    "files": [
+      "main.cjs",
+      "src/**",
+      "web/dist/**",
+      "package.json",
+      "build/icon.png"
+    ],
+    "directories": {
+      "buildResources": "build",
+      "output": "release"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Utility",
+      "artifactName": "Krishbot-${version}-linux-x64.${ext}"
+    },
+    "win": {
+      "target": [
+        "portable"
+      ],
+      "artifactName": "Krishbot-${version}-windows-x64.${ext}"
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "identity": null,
+      "category": "public.app-category.productivity",
+      "artifactName": "Krishbot-${version}-mac-${arch}.${ext}"
+    }
   }
 }

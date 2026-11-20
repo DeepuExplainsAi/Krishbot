@@ -1,38 +1,29 @@
 # Krishbot
 
-AI agents that run on your own computer. No cloud server, no account, nothing to host. Windows, macOS, Linux.
+Your own AI Bots, running on your own computer. Free for personal and commercial use.
+
+- Chat with Bots that run commands, read and write files, browse the web and use your apps.
+- Use the AI you already have: a Claude, ChatGPT or Gemini plan through its command-line app, a free local model (Ollama, LM Studio), a free-tier key, or any OpenAI-compatible API.
+- Connect apps with one click, or add your own MCP server or web API.
+- Skills, memories, routines (they run while Krishbot is open), tasks, group chats, a Library folder for files the Bots make.
+- Everything stays on this computer. Nothing to host and no account to create.
 
 ## Download
-Get the file for your system from the [latest release](../../releases/latest):
-- Windows: `Krishbot-…-windows-x64.exe` (double-click)
-- macOS: `Krishbot-…-mac-….dmg`
-- Linux: `Krishbot-…-linux-x64.AppImage` (`chmod +x`, then run)
 
-Builds are unsigned: Windows SmartScreen ("More info → Run anyway") and macOS (right-click → Open) warn once.
+Get the installer for your system from the [latest release](../../releases/latest): Windows (`.exe`), macOS (`.dmg`), Linux (`.AppImage`).
+The apps are not code-signed. Windows: "More info" then "Run anyway". macOS: right-click, Open. Linux: `chmod +x` the file, then run it.
 
-## What it does
-- **Your model, your choice** (Settings → Model connections):
-  - Local and free: Ollama, LM Studio.
-  - Free tiers: Groq, OpenRouter free models, Google Gemini.
-  - Paid keys: OpenAI, Anthropic.
-  - Any OpenAI-compatible URL.
-  - Your existing subscription: runs your signed-in CLI (Claude Code, Codex, Gemini CLI, or any command) so usage counts on your plan.
-- **Several bots**, each with its own instructions, model and tools.
-- **Tools:** run commands, read/write files, web search and fetch, and your own:
-  - **Custom API tools:** describe any HTTP API (URL, headers, body with `{placeholders}`).
-  - **MCP servers:** any stdio command or HTTP URL.
-- Actions that change things (commands, writes, POST/PUT/DELETE) ask for your OK; this can be turned off.
-- Everything is stored in your user folder. Keys never leave your computer except to the model API you chose.
+## Run from source
 
-CLI connections return text only (no tool calls); use an API connection for tools.
-
-## Develop
 ```
 npm install
-npm start          # desktop app
-npm run serve      # same UI in a browser, URL printed in the console
+npm run build
+npm start        # desktop window
+npm run serve    # or just the local server, prints a link
 ```
-Releases: GitHub Actions → "Release" builds all three systems and updates the `latest` release.
+
+Node.js 20+ is needed. One-click apps start with `npx`, so they need Node.js installed too.
 
 ## License
-Krishbot License (free to use, no resale or redistribution), Copyright (c) 2026 Krishbot, DeepuExplainsAi. See `LICENSE` and `THIRD_PARTY_NOTICES.md`.
+
+See [LICENSE](LICENSE). The license is also shown in Settings → About.
