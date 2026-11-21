@@ -1,10 +1,32 @@
-import Database from 'better-sqlite3';
+import { DatabaseSync } from 'node:sqlite';
 import fs from 'node:fs';
 import path from 'node:path';
 import { env } from './env.js';
 
 fs.mkdirSync(path.dirname(env.dbPath), { recursive: true });
-export const db = new Database(env.dbPath);
+/** Node's built-in SQLite (no native module to compile), with the two helpers the rest of the server uses. */
+/** better-sqlite3 accepted undefined and booleans; node:sqlite does not. */
+const bind = (a: unknown[]) => a.map((v) => (v === undefined ? null : typeof v === 'boolean' ? (v ? 1 : 0) : v));
+
+class Db extends DatabaseSync {
+  prepare(sql: string): any {
+    const st = super.prepare(sql);
+    const run = st.run.bind(st), get = st.get.bind(st), all = st.all.bind(st);
+    st.run = (...a: any[]) => run(...(bind(a) as any[]));
+    st.get = (...a: any[]) => get(...(bind(a) as any[]));
+    st.all = (...a: any[]) => all(...(bind(a) as any[]));
+    return st;
+  }
+  pragma(sql: string) { this.exec(`PRAGMA ${sql}`); }
+  transaction<T>(fn: () => T): () => T {
+    return () => {
+      this.exec('BEGIN IMMEDIATE');
+      try { const r = fn(); this.exec('COMMIT'); return r; } catch (e) { this.exec('ROLLBACK'); throw e; }
+    };
+  }
+}
+
+export const db = new Db(env.dbPath);
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 

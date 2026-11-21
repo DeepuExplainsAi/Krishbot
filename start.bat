@@ -3,7 +3,13 @@ rem Installs (first time), builds and starts Krishbot. Double-click this file.
 cd /d "%~dp0"
 where node >nul 2>nul
 if errorlevel 1 (
-  echo Node.js 20 or newer is needed. Install it from https://nodejs.org then run this again.
+  echo Node.js 22.13 or newer is needed. Install it from https://nodejs.org then run this again.
+  pause
+  exit /b 1
+)
+node -e "process.exit(process.versions.node.split('.').map(Number).reduce((a,v,i)=>a||(i==0?(v<22?1:0):i==1?(process.versions.node.startsWith('22.')&&v<13?1:0):0),0))" >nul 2>nul
+if errorlevel 1 (
+  echo Your Node.js is too old. Install Node.js 22.13 or newer from https://nodejs.org then run this again.
   pause
   exit /b 1
 )

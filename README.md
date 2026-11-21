@@ -10,7 +10,7 @@ Your own AI Bots, running on your own computer. Free for personal and commercial
 
 ## Install
 
-Needs Node.js 20 or newer (`node -v` to check).
+Needs Node.js 22.13 or newer (`node -v` to check).
 
 **Easiest: download the code, then start it**
 
@@ -52,7 +52,7 @@ Then open the `http://localhost:8787` link it prints.
 ```
 Install and run Krishbot on this computer.
 Repo: https://github.com/DeepuExplainsAi/Krishbot
-1. Check Node.js 20+ (node -v); install it if missing.
+1. Check Node.js 22.13+ (node -v); install it if missing.
 2. git clone the repo and cd Krishbot.
 3. Run npm install, npm run build, npm run serve, one at a time (no && on Windows PowerShell 5; use npm.cmd if scripts are blocked).
 4. Keep the server running and open the printed http://localhost:8787 link.
@@ -72,10 +72,10 @@ Start Krishbot once, then run `python3 scripts/add-hq-to-hermes.py`. It adds one
 npm install
 npm run build
 npm start        # desktop window (rebuilds the database module for it)
-npm run serve    # or just the local server (run `npm rebuild better-sqlite3` first if you ran npm start before)
+npm run serve    # or just the local server
 ```
 
-Node.js 20+ is needed. One-click apps start with `npx`, so they need Node.js installed too.
+Node.js 22.13+ is needed. One-click apps start with `npx`, so they need Node.js installed too.
 
 ## License
 

@@ -70,6 +70,7 @@ Done and type-checked, `vite build` OK; tools exercised with a script:
 6. Dark mode: letter tiles for apps without logos use theme colors, Engine model input readable, token form rewritten (see 8). Logo: `build/icon.png` is now committed. Still needs a look on a real screen.
 7. Templates: "Bot templates" button opens a menu of 6 starter bots that create a bot in one click (`web/src/lib/templates.ts`).
 8. App tokens: inline form with labelled field, "Save & test" (starts the MCP server, shows the real error), Cancel; row grows instead of overlapping.
+9a. Windows install failed for the owner: `better-sqlite3` had no prebuilt binary for Node 26 and tried to compile (needs Python + VS build tools). Replaced with Node's built-in `node:sqlite` (`server/src/db.ts` wrapper), so nothing compiles. Needs Node >= 22.13. Electron raised to 37 (npmRebuild off), untested.
 9. Installer: NOT tested on Windows (no Windows here). README now has the one-line terminal command as the tested route.
 
 Still open: Windows installer test, dark-mode visual check, `tests/e2e.mjs`, `tests/voice-call.mjs`, `web/src/dev/fixtures.ts`.
