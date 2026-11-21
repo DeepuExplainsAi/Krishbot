@@ -10,57 +10,63 @@ Your own AI Bots, running on your own computer. Free for personal and commercial
 
 ## Install
 
-Needs Node.js 22.13 or newer (`node -v` to check).
+Needs **Node.js 22.13 or newer** ([nodejs.org](https://nodejs.org), pick LTS). Check with `node -v`. Nothing is compiled, so no Python or Visual Studio is needed.
 
-**Easiest: download the code, then start it**
+### 1. Get the code
 
-- Windows: double-click `start.bat`. It installs, builds, starts and opens the browser. (Works even when PowerShell blocks scripts.)
-- macOS / Linux: run `./start.sh`.
+Download the zip from the green **Code** button and unzip it, or run `git clone https://github.com/DeepuExplainsAi/Krishbot`.
 
-**Got "running scripts is disabled on this system"?** That is PowerShell blocking `npm`. Any one of these fixes it:
+### 2. Start it
 
-1. Double-click `start.bat` instead (no PowerShell involved).
-2. Type `npm.cmd` instead of `npm` (`npm.cmd install`, `npm.cmd run build`, `npm.cmd run serve`).
-3. Allow scripts for this window only: `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`, then use `npm` as usual.
+- **Windows:** open the Krishbot folder and double-click `start.bat`. If Windows says "protected your PC", click More info, then Run anyway.
+- **macOS / Linux:** in the folder, run `./start.sh`.
 
-Run commands one per line. Do not paste two commands on one line.
+The first start installs and builds (a few minutes), then opens `http://localhost:8787`. Later starts are fast.
 
-Or by hand, one line at a time:
+### By hand (Windows PowerShell)
 
-**Windows (PowerShell)**
+Type each line separately. Use `npm.cmd`, not `npm` (PowerShell blocks `npm` with "running scripts is disabled").
 
 ```
-git clone https://github.com/DeepuExplainsAi/Krishbot
 cd Krishbot
 npm.cmd install
 npm.cmd run build
 npm.cmd run serve
 ```
 
-(PowerShell 5 does not understand `&&`, and plain `npm` fails with "running scripts is disabled"; `npm.cmd` avoids that. Type `npm.cmd`, not `npm`.)
-
-**macOS / Linux**
+### By hand (macOS / Linux / Git Bash / cmd)
 
 ```
-git clone https://github.com/DeepuExplainsAi/Krishbot && cd Krishbot && npm install && npm run build && npm run serve
+cd Krishbot
+npm install
+npm run build
+npm run serve
 ```
 
-Then open the `http://localhost:8787` link it prints.
+### Problems
 
-**With a coding agent** (Claude Code, Codex, Cursor, VS Code ...): paste this.
+| Message | Fix |
+|---|---|
+| `running scripts is disabled on this system` | Use `start.bat`, or type `npm.cmd` instead of `npm`. |
+| `&&` is not a valid statement separator | Run one command per line. |
+| `Node.js ... too old` or `node:sqlite` not found | Install Node.js 22.13 or newer. |
+| Port 8787 in use | Close the other Krishbot window, or set `PORT=8788`. |
+
+### With a coding agent
+
+Paste into Claude Code, Codex, Cursor or VS Code:
 
 ```
-Install and run Krishbot on this computer.
-Repo: https://github.com/DeepuExplainsAi/Krishbot
+Install and run Krishbot on this computer. Repo: https://github.com/DeepuExplainsAi/Krishbot
 1. Check Node.js 22.13+ (node -v); install it if missing.
 2. git clone the repo and cd Krishbot.
-3. Run npm install, npm run build, npm run serve, one at a time (no && on Windows PowerShell 5; use npm.cmd if scripts are blocked).
-4. Keep the server running and open the printed http://localhost:8787 link.
+3. On Windows run start.bat; on macOS/Linux run ./start.sh. (By hand: npm install, npm run build, npm run serve, one at a time. On Windows PowerShell use npm.cmd.)
+4. Keep the server running and open http://localhost:8787.
 5. If a step fails, fix the cause and retry, then tell me what you did.
 Do not change the licence or author name.
 ```
 
-Bots need the Hermes agent plus a model key or subscription to answer. Desktop installers are on the [releases page](../../releases/latest) but are not tested on Windows; the commands above are the tested route.
+Bots need the Hermes agent plus a model key or subscription to answer. Desktop installers on the [releases page](../../releases/latest) are not tested on Windows; `start.bat` is the tested route.
 
 ## Give the main agent the app tools
 
@@ -71,7 +77,7 @@ Start Krishbot once, then run `python3 scripts/add-hq-to-hermes.py`. It adds one
 ```
 npm install
 npm run build
-npm start        # desktop window (rebuilds the database module for it)
+npm start        # desktop window
 npm run serve    # or just the local server
 ```
 
