@@ -10,7 +10,14 @@ Your own AI Bots, running on your own computer. Free for personal and commercial
 
 ## Install
 
-Needs Node.js 20 or newer (`node -v` to check). Run the lines one at a time.
+Needs Node.js 20 or newer (`node -v` to check).
+
+**Easiest: download the code, then start it**
+
+- Windows: double-click `start.bat`. It installs, builds, starts and opens the browser. (Works even when PowerShell blocks scripts.)
+- macOS / Linux: run `./start.sh`.
+
+Or by hand, one line at a time:
 
 **Windows (PowerShell)**
 
@@ -22,7 +29,7 @@ npm.cmd run build
 npm.cmd run serve
 ```
 
-(PowerShell 5 does not understand `&&`, and `npm.cmd` avoids the "running scripts is disabled" error.)
+(PowerShell 5 does not understand `&&`, and plain `npm` fails with "running scripts is disabled"; `npm.cmd` avoids that. Type `npm.cmd`, not `npm`.)
 
 **macOS / Linux**
 
