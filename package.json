@@ -9,7 +9,10 @@
   "engines": {
     "node": ">=22.13"
   },
-  "author": "Krishbot",
+  "author": {
+    "name": "Krishbot",
+    "email": "noreply@users.noreply.github.com"
+  },
   "scripts": {
     "start": "npm run build:server && electron .",
     "serve": "node server/dist/index.js",
