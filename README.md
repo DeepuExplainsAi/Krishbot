@@ -17,6 +17,14 @@ Needs Node.js 20 or newer (`node -v` to check).
 - Windows: double-click `start.bat`. It installs, builds, starts and opens the browser. (Works even when PowerShell blocks scripts.)
 - macOS / Linux: run `./start.sh`.
 
+**Got "running scripts is disabled on this system"?** That is PowerShell blocking `npm`. Any one of these fixes it:
+
+1. Double-click `start.bat` instead (no PowerShell involved).
+2. Type `npm.cmd` instead of `npm` (`npm.cmd install`, `npm.cmd run build`, `npm.cmd run serve`).
+3. Allow scripts for this window only: `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`, then use `npm` as usual.
+
+Run commands one per line. Do not paste two commands on one line.
+
 Or by hand, one line at a time:
 
 **Windows (PowerShell)**
