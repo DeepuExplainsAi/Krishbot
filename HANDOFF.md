@@ -20,7 +20,7 @@ Old code (cloud-computer based) is in git at `870fbcd`. `f4e567e` replaced it wi
 - `src/routines.js`: 5-field cron + "every N min/hours".
 - `web/`: React 18 + Vite + zustand. `shared/`: types used by `@shared` alias.
 - `.github/workflows/release.yml`: builds AppImage / portable exe / dmg and publishes tag `latest`.
-- `LICENSE` (custom Krishbot License, not MIT), `THIRD_PARTY_NOTICES.md`. License also shown in Settings → About.
+- `LICENSE` (GNU AGPL-3.0-only), `THIRD_PARTY_NOTICES.md`. License also shown in Settings → About.
 
 ## Removed (cloud-bound)
 Cloud computer viewer/noVNC, computer sleep/wake, Google sign-in (UI always signed in as "You"), Hermes engine panel (replaced by a local provider/model picker), voice chat and dictation (needed a cloud voice service), OAuth app connect (replaced by key forms + custom MCP/web API). "Share" is a stub toast.

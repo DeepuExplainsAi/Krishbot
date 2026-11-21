@@ -220,7 +220,7 @@ function AboutSection() {
           </div></div>
           <div className="cfg-row"><div className="cfg-row__text">
             <div className="cfg-row__title">License</div>
-            <div className="cfg-row__sub">Copyright © 2026 Krishbot, DeepuExplainsAi. Free for personal and commercial use. Reselling, rebranding, redistributing or hosting it for others needs written permission. Components made by others stay under their own licenses.</div>
+            <div className="cfg-row__sub">Copyright © 2026 DeepuExplainsAi. Free software under the GNU Affero General Public License v3.0: you may use, change and share it, but modified versions (including ones run as a hosted service) must also be shared under the same license. Components made by others stay under their own licenses.</div>
           </div></div>
           <div className="cfg-row"><div className="cfg-row__text">
             <div className="cfg-row__sub"><a href="https://github.com/DeepuExplainsAi/Krishbot/blob/main/LICENSE" target="_blank" rel="noreferrer">Read the full license</a> · <a href="https://github.com/DeepuExplainsAi/Krishbot/blob/main/THIRD_PARTY_NOTICES.md" target="_blank" rel="noreferrer">Third-party notices</a></div>

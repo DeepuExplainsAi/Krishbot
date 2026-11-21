@@ -44,4 +44,4 @@ Node.js 20+ is needed. One-click apps start with `npx`, so they need Node.js ins
 
 ## License
 
-See [LICENSE](LICENSE). The license is also shown in Settings → About.
+Copyright (c) 2026 DeepuExplainsAi. Licensed under the [GNU AGPL v3.0](LICENSE). The license is also shown in Settings → About.

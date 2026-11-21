@@ -5,7 +5,7 @@
   "description": "Krishbot: your own AI agents on your own computer.",
   "main": "main.cjs",
   "type": "module",
-  "license": "SEE LICENSE IN LICENSE",
+  "license": "AGPL-3.0-only",
   "author": "Krishbot",
   "scripts": {
     "start": "npm run build:server && electron-builder install-app-deps && electron .",
