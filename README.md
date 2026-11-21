@@ -8,24 +8,44 @@ Your own AI Bots, running on your own computer. Free for personal and commercial
 - Skills, memories, routines (they run while Krishbot is open), tasks, group chats, a Library folder for files the Bots make.
 - Everything stays on this computer. Nothing to host and no account to create.
 
-## Download
+## Install
 
-Get the installer for your system from the [latest release](../../releases/latest): Windows (`.exe`), macOS (`.dmg`), Linux (`.AppImage`).
-The apps are not code-signed. Windows: "More info" then "Run anyway". macOS: right-click, Open. Linux: `chmod +x` the file, then run it.
+Needs Node.js 20 or newer (`node -v` to check). Run the lines one at a time.
 
-**Installer not working?** Use the terminal route (needs Node.js 20+), it is the tested one:
+**Windows (PowerShell)**
 
 ```
 git clone https://github.com/DeepuExplainsAi/Krishbot
 cd Krishbot
-npm install
-npm run build
-npm run serve
+npm.cmd install
+npm.cmd run build
+npm.cmd run serve
 ```
 
-Run the lines one at a time (Windows PowerShell 5 does not understand `&&`).
+(PowerShell 5 does not understand `&&`, and `npm.cmd` avoids the "running scripts is disabled" error.)
+
+**macOS / Linux**
+
+```
+git clone https://github.com/DeepuExplainsAi/Krishbot && cd Krishbot && npm install && npm run build && npm run serve
+```
 
 Then open the `http://localhost:8787` link it prints.
+
+**With a coding agent** (Claude Code, Codex, Cursor, VS Code ...): paste this.
+
+```
+Install and run Krishbot on this computer.
+Repo: https://github.com/DeepuExplainsAi/Krishbot
+1. Check Node.js 20+ (node -v); install it if missing.
+2. git clone the repo and cd Krishbot.
+3. Run npm install, npm run build, npm run serve, one at a time (no && on Windows PowerShell 5; use npm.cmd if scripts are blocked).
+4. Keep the server running and open the printed http://localhost:8787 link.
+5. If a step fails, fix the cause and retry, then tell me what you did.
+Do not change the licence or author name.
+```
+
+Bots need the Hermes agent plus a model key or subscription to answer. Desktop installers are on the [releases page](../../releases/latest) but are not tested on Windows; the commands above are the tested route.
 
 ## Give the main agent the app tools
 
