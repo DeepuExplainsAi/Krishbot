@@ -8,9 +8,23 @@ Your own AI Bots, running on your own computer. Free for personal and commercial
 - Skills, memories, routines (they run while Krishbot is open), tasks, group chats, a Library folder for files the Bots make.
 - Everything stays on this computer. Nothing to host and no account to create.
 
+## Requirements
+
+| Needed | Version |
+|---|---|
+| Node.js | **22.13 or newer** (24 LTS recommended; 20 and older do not work) |
+| npm | Comes with Node.js |
+| Git | Optional (you can download the zip instead) |
+| System | Windows 10/11, macOS or Linux |
+| Disk and RAM | About 1 GB free disk for the install. 2 GB RAM or more is comfortable. |
+| Internet | For the first install, and for the AI model you use |
+
+Not needed: Python, Visual Studio build tools or any compiler.
+Bots answer only with the Hermes agent plus a model key or subscription.
+
 ## Install
 
-Needs **Node.js 22.13 or newer** ([nodejs.org](https://nodejs.org), pick LTS). Check with `node -v`. Nothing is compiled, so no Python or Visual Studio is needed.
+Install **Node.js 22.13 or newer** from [nodejs.org](https://nodejs.org) (pick LTS) and check it with `node -v`.
 
 ### 1. Get the code
 
