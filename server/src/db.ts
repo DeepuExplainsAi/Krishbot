@@ -130,7 +130,5 @@ addColumn('bots', 'provider', 'TEXT');
 addColumn('bots', 'engine', 'TEXT');
 addColumn('bots', 'engine_port', 'INTEGER');
 addColumn('bots', 'handback_at', 'INTEGER');
-addColumn('screens', 'width', 'INTEGER');
-addColumn('screens', 'height', 'INTEGER');
 
 export const now = () => Date.now();

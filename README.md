@@ -13,6 +13,10 @@ Your own AI Bots, running on your own computer. Free for personal and commercial
 Get the installer for your system from the [latest release](../../releases/latest): Windows (`.exe`), macOS (`.dmg`), Linux (`.AppImage`).
 The apps are not code-signed. Windows: "More info" then "Run anyway". macOS: right-click, Open. Linux: `chmod +x` the file, then run it.
 
+## Give the main agent the app tools
+
+Start Krishbot once, then run `python3 scripts/add-hq-to-hermes.py`. It adds one `hq` entry to `~/.hermes/config.yaml` and keeps a backup copy.
+
 ## Run from source
 
 ```

@@ -15,7 +15,7 @@ import { roomsApi } from './routes-rooms.js';
 import { enqueue, expireStaleApprovals } from './agent/loop.js';
 import { configApi } from './routes-config.js';
 import { mcpApi } from './mcp.js';
-import { initEngines } from './engine.js';
+import { initEngines, mcpToken } from './engine.js';
 import { hooks } from './triggers.js';
 import { localHostOnly, sameOriginWrites } from './lib/auth.js';
 
@@ -43,6 +43,16 @@ if (fs.existsSync(webDist)) {
   app.use('/*', serveStatic({ root: path.relative(process.cwd(), webDist) }));
   app.get('*', (c) => c.html(fs.readFileSync(path.join(webDist, 'index.html'), 'utf8')));
 }
+
+// The entry that gives the main agent this app's tools (see scripts/add-hq-to-hermes.py).
+fs.writeFileSync(path.join(env.dataDir, 'hermes-mcp-hq.yaml'), `# Add under mcp_servers: in ~/.hermes/config.yaml, or run: python3 scripts/add-hq-to-hermes.py
+  hq:
+    url: ${env.mcpBaseUrl}/mcp/primary
+    headers:
+      Authorization: Bearer ${mcpToken('primary')}
+    timeout: 1800
+    connect_timeout: 30
+`, { mode: 0o600 });
 
 const server = serve({ fetch: app.fetch, port: env.port, hostname: env.host }, (info) => console.log(`[krishbot] server on http://localhost:${info.port}`));
 // KRISHBOT_NO_SCHEDULER=1 for extra dev/test servers sharing a database copy, so routines and triggers don't fire twice.
