@@ -1,6 +1,5 @@
 node_modules
 release
 web/dist
-build/icon.png
 .DS_Store
 server/dist

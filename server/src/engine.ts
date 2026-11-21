@@ -297,6 +297,8 @@ async function startGateway(botId: string): Promise<void> {
       // Hermes' browser tool talks to a helper process it finds under this folder. With the default
       // (one folder per HOME) every agent on the computer would end up driving the same browser.
       BH_HOME: path.join(home, 'browser-harness'),
+      // Gemini CLI refuses to run in a folder it does not trust (exit 55); the agent's home is ours.
+      GEMINI_CLI_TRUST_WORKSPACE: 'true',
     },
   });
   fs.closeSync(log);
@@ -419,14 +421,29 @@ function toProviders(data: any): EngineProvider[] {
         // Hermes lists Anthropic as an API-key provider, yet it can also sign in to a Claude subscription. Offer that until a key is in place.
         kind: String(p.auth_type ?? '').includes('oauth') || (p.slug === 'anthropic' && !p.authenticated) ? 'subscription' : 'api_key',
         connected: !!p.authenticated,
-        models: featured.filter((m: unknown) => typeof m === 'string').slice(0, 12),
+        models: (Array.isArray(p.models) && p.models.length ? p.models : featured).filter((m: unknown) => typeof m === 'string').slice(0, 300),
+        free: [],
       };
     });
   const rank = (p: EngineProvider) => (p.connected ? 0 : 1) * 100 + (WELL_KNOWN.indexOf(p.id) < 0 ? 50 : WELL_KNOWN.indexOf(p.id));
   return out.sort((a, b) => rank(a) - rank(b));
 }
 
-export async function engineInfo(botId: string): Promise<EngineInfo> {
+/** OpenRouter publishes its full live list and prices without a key; free models cost nothing per token. */
+let openrouterCache: { at: number; models: string[]; free: string[] } | null = null;
+async function openrouterModels(refresh: boolean) {
+  if (!refresh && openrouterCache && Date.now() - openrouterCache.at < 10 * 60_000) return openrouterCache;
+  try {
+    const r = await fetch('https://openrouter.ai/api/v1/models', { signal: AbortSignal.timeout(8000) });
+    if (!r.ok) throw new Error(`OpenRouter answered ${r.status}`);
+    const list: any[] = ((await r.json()) as any).data ?? [];
+    const free = list.filter((m) => m.id.endsWith(':free') || (Number(m.pricing?.prompt) === 0 && Number(m.pricing?.completion) === 0)).map((m) => String(m.id));
+    openrouterCache = { at: Date.now(), models: list.map((m) => String(m.id)), free };
+  } catch { /* offline: keep the old list */ }
+  return openrouterCache;
+}
+
+export async function engineInfo(botId: string, refresh = false): Promise<EngineInfo> {
   const b = botRow(botId);
   if (!b) throw new Error('bot not found');
   const kind = engineKind(botId);
@@ -451,14 +468,21 @@ export async function engineInfo(botId: string): Promise<EngineInfo> {
   }
   if (kind === 'managed' && starting.has(botId)) return { ...base, status: 'starting' };
 
+  if (refresh) optionsCache.delete(botId);
   const data = await modelOptions(botId, e);
+  const providers = toProviders(data);
+  const or = providers.find((p) => p.id === 'openrouter');
+  if (or) {
+    const live = await openrouterModels(refresh);
+    if (live) { or.models = [...new Set([...live.free, ...or.models, ...live.models])]; or.free = live.free; }
+  }
   return {
     ...base,
     status: 'ready',
     version: typeof health.version === 'string' && health.version !== 'unknown' ? health.version : null,
     model: b.model ?? data?.model ?? null,
     provider: b.provider ?? data?.provider ?? null,
-    providers: toProviders(data),
+    providers,
   };
 }
 

@@ -1,6 +1,6 @@
-/** Per-browser settings in localStorage under `krishbot.<name>`. Values saved before the project was renamed (`grokbot.<name>`) are still read. */
+/** Per-browser settings in localStorage under `krishbot.<name>`. */
 export function lsGet(name: string): string | null {
-  try { return localStorage.getItem(`krishbot.${name}`) ?? localStorage.getItem(`grokbot.${name}`); } catch { return null; }
+  try { return localStorage.getItem(`krishbot.${name}`); } catch { return null; }
 }
 
 export function lsSet(name: string, value: string) {

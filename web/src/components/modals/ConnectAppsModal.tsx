@@ -6,6 +6,7 @@ import { useStore } from '../../store';
 import { Icon } from '../Icon';
 import { Menu } from '../Menu';
 import { ToolkitLogo } from '../ToolkitLogo';
+import { BOT_TEMPLATES, type BotTemplate } from '../../lib/templates';
 import { Modal } from './Modal';
 
 /** Design pill → app category. */
@@ -46,7 +47,7 @@ function AppRow({ app, onChanged }: { app: Toolkit; onChanged: () => void }) {
       <ToolkitLogo name={app.name} logo={app.logo} />
       <span className="app-row__text">
         <span className="app-row__name">{app.name}</span>
-        {error ? <span className="app-row__error">{error}</span> : app.description && <span className="app-row__desc">{app.description}</span>}
+        {error ? <span className="app-row__error" title={error}>{error}</span> : app.description && <span className="app-row__desc">{app.description}</span>}
       </span>
       {app.connected ? (
         <button type="button" className={`app-row__connected${state === 'confirm' ? ' is-confirm' : ''}`} onClick={disconnect} onMouseLeave={() => state === 'confirm' && setState('idle')} disabled={state === 'busy'}>
@@ -55,16 +56,25 @@ function AppRow({ app, onChanged }: { app: Toolkit; onChanged: () => void }) {
       ) : app.noAuth ? (
         <span className="app-row__connected is-static"><Icon name="check" size={12} opacity={0.56} />Built in</span>
       ) : (
-        <button type="button" className="app-row__connect" onClick={connect} disabled={state === 'busy'}>
-          {state === 'busy' ? 'Starting…' : form ? 'Save' : 'Connect'}
-        </button>
+        !form && (
+          <button type="button" className="app-row__connect" onClick={connect} disabled={state === 'busy'}>
+            {state === 'busy' ? 'Starting…' : 'Connect'}
+          </button>
+        )
       )}
       {form && !app.connected && (
-        <div className="app-row__form">
+        <form className="app-row__form" onSubmit={(e) => { e.preventDefault(); connect(); }}>
           {needs.map((n) => (
-            <input key={n.key} className="text-input" type={n.secret ? 'password' : 'text'} placeholder={n.label} autoComplete="off" spellCheck={false} value={values[n.key] ?? ''} onChange={(e) => setValues({ ...values, [n.key]: e.target.value })} />
+            <label key={n.key} className="app-row__field">
+              <span className="cfg-field__label">{n.label}</span>
+              <input className="text-input" type={n.secret ? 'password' : 'text'} autoComplete="off" spellCheck={false} value={values[n.key] ?? ''} onChange={(e) => setValues({ ...values, [n.key]: e.target.value })} />
+            </label>
           ))}
-        </div>
+          <div className="cfg-form__actions">
+            <button type="submit" className="app-row__connect" disabled={state === 'busy'}>{state === 'busy' ? 'Testing…' : 'Save & test'}</button>
+            <button type="button" className="link-btn link-btn--small" onClick={() => { setForm(false); setError(null); }}>Cancel</button>
+          </div>
+        </form>
       )}
     </div>
   );
@@ -145,6 +155,18 @@ export function ConnectAppsModal() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [more, setMore] = useState(false);
+  const [templates, setTemplates] = useState(false);
+  const [templateError, setTemplateError] = useState<string | null>(null);
+  const addTemplate = async (t: BotTemplate) => {
+    setTemplateError(null);
+    try {
+      const { bot } = await api.createBot({ name: t.name, label: t.label, instructions: t.instructions, avatarShape: 'heart', avatarColor: 'orange', mode: 'personal' });
+      const st = useStore.getState();
+      st.set({ bots: st.bots.some((b) => b.id === bot.id) ? st.bots : [...st.bots, bot] });
+      st.selectBot(bot.id);
+      close();
+    } catch (e) { setTemplateError((e as Error).message); }
+  };
   const [bump, setBump] = useState(0);
   const refresh = useCallback(() => setBump((n) => n + 1), []);
 
@@ -224,11 +246,17 @@ export function ConnectAppsModal() {
               <Icon name="search" size={14} opacity={0.56} />
               <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search apps and skills" aria-label="Search apps" />
             </label>
-            <button type="button" className="pill-chip" title="Bot templates are coming soon" disabled>
-              {primary && <BotAvatarFor bot={primary} size={22} />}
-              <span>Bot templates</span>
-              <Icon name="share" size={12} opacity={0.56} />
-            </button>
+            <span className="cat-pill-anchor">
+              <button type="button" className="pill-chip" onClick={() => setTemplates(!templates)} aria-expanded={templates}>
+                {primary && <BotAvatarFor bot={primary} size={22} />}
+                <span>Bot templates</span>
+                <Icon name="chev_down" size={10} opacity={0.56} />
+              </button>
+              {templates && (
+                <Menu align="right" onClose={() => setTemplates(false)} items={BOT_TEMPLATES.map((t) => ({ label: t.name, hint: t.label, onSelect: () => addTemplate(t) }))} />
+              )}
+            </span>
+            {templateError && <span className="app-row__error">{templateError}</span>}
           </div>
           <div className="cat-pills">
             <button type="button" className={`cat-pill${view.kind === 'all' ? ' is-active' : ''}`} onClick={() => setView({ kind: 'all' })}>All</button>

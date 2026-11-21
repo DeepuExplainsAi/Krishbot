@@ -117,7 +117,7 @@ configApi.post('/bots/:id/compact', (c) => {
 configApi.get('/bots/:id/engine', async (c) => {
   const b = ownBot(c.get('user').id, c.req.param('id'));
   if (!b) return c.json({ error: 'not found' }, 404);
-  return c.json({ engine: await engineInfo(b.id) });
+  return c.json({ engine: await engineInfo(b.id, c.req.query('refresh') === '1') });
 });
 
 /** Which model this bot's turns ask for. Empty values go back to the agent's own default. */

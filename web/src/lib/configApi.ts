@@ -52,7 +52,7 @@ export const configApi = {
   files: (botId: string, path = '') => req<LibraryListing>('GET', `/bots/${botId}/files?path=${encodeURIComponent(path)}`),
   downloadFile: (botId: string, path: string) => req<{ url: string }>('POST', `/bots/${botId}/files/download`, { path }),
 
-  engine: (botId: string) => req<{ engine: EngineInfo }>('GET', `/bots/${botId}/engine`),
+  engine: (botId: string, refresh = false) => req<{ engine: EngineInfo }>('GET', `/bots/${botId}/engine${refresh ? '?refresh=1' : ''}`),
   engineLogin: (botId: string, provider?: string) => req<{ ok: true; opened: boolean; command: string }>('POST', `/bots/${botId}/engine/login`, provider ? { provider } : {}),
   restartEngine: (botId: string) => req<{ engine: EngineInfo }>('POST', `/bots/${botId}/engine/restart`),
   setEngine: (botId: string, p: { provider?: string | null; model?: string | null }) => req<{ engine: EngineInfo }>('PATCH', `/bots/${botId}/engine`, p),

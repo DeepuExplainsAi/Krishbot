@@ -60,21 +60,16 @@ DONE on branch `full-port` (see below). The old `server/src` TypeScript app is b
 ## Still unverified (needs a real machine)
 Installers from the release workflow, real Hermes sign-in per provider, voice with a real key, group chats against a live agent, npx apps (need Node.js), the dark mode look.
 
-## NEXT WORK (owner's list, 2026-11-21; not started, do in this order)
-Owner's screenshots come from the OLD release build (`src/*.js` rewrite), so first re-check each item on the new `full-port` build, fix what still fails, then merge to `main`.
+## NEXT WORK status (2026-11-21)
+Done and type-checked, `vite build` OK; tools exercised with a script:
+1. Gemini CLI: managed agents now start with `GEMINI_CLI_TRUST_WORKSPACE=true`. Errors from the provider are shown as returned by the agent (no bare "Not found" string remains in our code).
+2. Live model lists: Engine panel shows the agent's full model list, OpenRouter's live list with free models first and a count, a Refresh button, and the Model field is a typed dropdown (any id allowed). Other providers: whatever Hermes `GET /api/model/options` returns.
+3. No cloud computer: no panel/text left (removed the last status-dot CSS).
+4. Bot creation: new tools `create_bot` and `spawn_subagent` (4 max, hidden, report back with `send_to_bot`); prompt tells the main bot to create and delegate on its own. `createBot` moved to `server/src/bots.ts`.
+5. Video feature list vs app: multi-bot, bot-to-bot, Hermes harness, any model/subscription, X research, voice, tasks, routines, library, memory, approvals, apps = present. Cloud-only (Orgo computer, Composio login, iMessage number, Agent Mail, public hosting) = intentionally not included. No creator name appears anywhere in code/docs.
+6. Dark mode: letter tiles for apps without logos use theme colors, Engine model input readable, token form rewritten (see 8). Logo: `build/icon.png` is now committed. Still needs a look on a real screen.
+7. Templates: "Bot templates" button opens a menu of 6 starter bots that create a bot in one click (`web/src/lib/templates.ts`).
+8. App tokens: inline form with labelled field, "Save & test" (starts the MCP server, shows the real error), Cancel; row grows instead of overlapping.
+9. Installer: NOT tested on Windows (no Windows here). README now has the one-line terminal command as the tested route.
 
-1. **Model setup errors ("Not found").** OpenRouter (`https://openrouter.ai/api/v1`, free models) shows red "Not found" on Save and test, and Gemini CLI cannot be added. Show the real provider error, never a bare "Not found". The Gemini CLI turn failed with exit 55: "Gemini CLI is not running in a trusted folder"; run it with `--skip-trust` (or set `GEMINI_CLI_TRUST_WORKSPACE=true`) and a trusted working dir. Check this on the new Hermes-based Engine panel too.
-2. **Live model lists everywhere.** Every model picker (Engine panel, any "Manage models") must fetch the list live from the provider (`/models`, Hermes `GET /api/model/options`) and mark which are free. Add a refresh button next to each list so models that appear later show up. The Model field must be a dropdown of the live list (typed value allowed), not a bare text box with "default". Same rule for MCP/app lists.
-3. **No cloud computer.** The old zip had a "Computer" view on the side that ran on a cloud server. It must not exist; everything runs on the user's own PC. Check that no panel, button or text still mentions it.
-4. **Automatic bot creation and delegation (lost feature).** In the zip, the main bot created new bots by itself and gave them work (as in the original Grok bot). Verify tools `create_bot`, `send_to_bot`, subagents and rooms in `agent/tools.ts`, `agent/subagents.ts` and `agent/prompt.ts` still work end to end and that the prompt tells the main bot to do this on its own. Compare with `~/bot/bot-hq-main` (zip) and with commit `870fbcd`; restore anything missing except cloud parts.
-5. **Other lost features from the zip.** Reference: the owner built the zip from the video "I Stole the Best Part of Every AI Agent... With One Prompt (Open Source)" by Nick Vasilescu (https://youtu.be/ceU0tS6sXbU; channel @nickvasiles). Its page text is not readable from the VM; open it in a browser, list the features shown, and check each exists. Keep everything local, remove only cloud parts. Still not ported: `tests/e2e.mjs`, `tests/voice-call.mjs`, `web/src/dev/fixtures.ts` (they target the old cloud API).
-6. **Dark mode (still broken on the owner's laptop, see screenshots).**
-   - Connect Apps: app/tool logo tiles are solid light squares with no icon; "Save", "Connect" and the token input overlap other rows (layout overlaps, tooltip over rows).
-   - A MCP/API "personal access token" field floats over the Notion row.
-   - Bot templates popup and the Engine panel text are very dim; the Model field text is almost invisible.
-   - The app logo is missing in the window and taskbar (`build/icon.png` is generated only in `npm run dist`; make sure a real logo ships and the window uses it).
-   - Test on a real dark-mode screen with screenshots (the 482 MB VM cannot run Chromium).
-7. **Templates.** The bot-template button and its popup do not work well (cursor on "Bot templa…", popup mostly empty).
-8. **MCP / app tokens.** Pasting a token for an app (GitHub, Notion, Slack) must be a clean inline form with a visible field, Save and Test, and clear errors.
-9. **Installer vs command.** Owner wants whichever works. Today `npm install && npm run build && npm run serve` (open the printed localhost link) is tested; the Electron installer from the release page is NOT tested. Verify the installer on Windows (the owner uses Windows 11); if it fails, remove the release workflow's installers and ship the one-line terminal command instead (document it in README).
-10. After all of the above: update this file (done / not done), then merge `full-port` into `main`.
+Still open: Windows installer test, dark-mode visual check, `tests/e2e.mjs`, `tests/voice-call.mjs`, `web/src/dev/fixtures.ts`.

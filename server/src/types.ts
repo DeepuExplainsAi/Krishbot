@@ -181,6 +181,8 @@ export interface EngineProvider {
   connected: boolean;
   /** Suggested model ids for this provider. */
   models: string[];
+  /** Models in `models` that cost nothing. */
+  free: string[];
 }
 
 /** The Hermes agent that runs one bot. */

@@ -46,7 +46,7 @@ export const env = {
   maxBots: Number(process.env.MAX_BOTS ?? 50),
 };
 
-/** KRISHBOT_<name>, or GROKBOT_<name> as set up before the project was renamed. */
+/** KRISHBOT_<name> from the environment. */
 export function compatEnv(name: string): string | undefined {
-  return process.env[`KRISHBOT_${name}`] ?? process.env[`GROKBOT_${name}`];
+  return process.env[`KRISHBOT_${name}`];
 }

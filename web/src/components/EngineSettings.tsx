@@ -36,10 +36,10 @@ export function EngineSettings({ bot }: { bot: Bot }) {
   }, []);
 
   /** Quiet refreshes keep what is on screen if the call fails. */
-  const load = useCallback((quiet = false) => {
+  const load = useCallback((quiet = false, refresh = false) => {
     let alive = true;
     if (!quiet) setPhase('loading');
-    configApi.engine(botId)
+    configApi.engine(botId, refresh)
       .then((r) => { if (alive && r?.engine) apply(r.engine, quiet); else if (alive && !quiet) setPhase('unavailable'); })
       .catch(() => { if (alive && !quiet) setPhase('unavailable'); });
     return () => { alive = false; };
@@ -149,8 +149,10 @@ export function EngineSettings({ bot }: { bot: Bot }) {
           onChange={(e) => { dirty.current = true; setNote(null); setModel(e.target.value); }}
           onKeyDown={(e) => { if (e.key === 'Enter') save(); }}
         />
-        <datalist id={listId}>{suggestions.map((m) => <option key={m} value={m} />)}</datalist>
+        <datalist id={listId}>{suggestions.map((m) => <option key={m} value={m} label={selected?.free?.includes(m) ? `${m} (free)` : m} />)}</datalist>
+        <button type="button" className="link-btn link-btn--small" title="Reload the live model list" onClick={() => load(true, true)}>Refresh</button>
       </div>
+      <div className="engine__conn">{suggestions.length} models available{selected?.free?.length ? ` · ${selected.free.length} free` : ''}{suggestions.length && !suggestions.includes(model.trim()) && model.trim() ? ' · custom id' : ''}</div>
       <div className="engine__actions">
         <button type="button" className="btn btn--sm btn--bot" onClick={save} disabled={!changed || busy === 'save'}>{busy === 'save' ? 'Saving…' : 'Save'}</button>
         {changed && <button type="button" className="link-btn link-btn--small" onClick={() => { dirty.current = false; setNote(null); setProvider(engine.provider ?? ''); setModel(engine.model ?? ''); }}>Undo</button>}

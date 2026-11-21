@@ -88,7 +88,8 @@ a { color: inherit; }
   background: #FFFFFF; box-shadow: #1C1C1C14 0 0 0 0.5px inset; color: #1C1C1C;
 }
 .toolkit-logo img { object-fit: contain; }
-.toolkit-logo__letter { font-weight: 600; color: var(--color-text-secondary); line-height: 1; }
+.toolkit-logo.is-letter { background: var(--color-bg-subtle); box-shadow: 0 0 0 0.5px var(--color-border) inset; }
+.toolkit-logo__letter { font-weight: 600; color: var(--color-text-primary); line-height: 1; }
 
 .menu {
   position: absolute; z-index: 50; min-width: 200px; padding: 4px; border-radius: 12px;

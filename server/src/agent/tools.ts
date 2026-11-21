@@ -10,6 +10,9 @@ import { scheduleRoutine, unscheduleRoutine } from '../routines.js';
 import { createWebhookRoutine, describeEvent } from '../triggers.js';
 import { setCheckins } from '../proactive.js';
 import { createRoom, postToRoom } from './rooms.js';
+import { createBot, UserError } from '../bots.js';
+import { createSubagent } from './subagents.js';
+import { assignEngine, provisionEngine } from '../engine.js';
 import type { ActivityKind } from '../types.js';
 import { Cron } from 'croner';
 
@@ -252,6 +255,40 @@ export const TOOLS: ToolDef[] = [
       if (ctx.depth >= 3) return { output: 'Too many hops between bots; answer the user directly instead.' };
       ctx.enqueueBotMessage(ctx.botId, target.id, String(a.message), ctx.depth + 1);
       return { output: `Sent to ${target.name}. Their reply will come back to you as a message.`, summary: `Messaged ${target.name}` };
+    },
+  },
+  {
+    name: 'create_bot',
+    description: "Create a new Bot on the user's team for a recurring role (researcher, writer, coder...). It shows in the sidebar. Give it clear instructions, then hand it work with send_to_bot.",
+    parameters: obj({ name: { type: 'string' }, label: { type: 'string', description: 'Short role, e.g. "Researcher"' }, instructions: { type: 'string', description: 'Standing instructions for the new Bot' } }, ['name', 'instructions']),
+    activity: 'working',
+    label: 'Creating a Bot',
+    impl: async (a, ctx) => {
+      if (botByName(ctx.userId, String(a.name))) return { output: `A bot named "${a.name}" already exists; use send_to_bot.` };
+      try {
+        const b = createBot(ctx.userId, { name: String(a.name), label: a.label, instructions: String(a.instructions ?? '') });
+        return { output: JSON.stringify({ ok: true, bot_name: b.name }), summary: `Created ${b.name}` };
+      } catch (e) {
+        if (e instanceof UserError) return { output: e.message };
+        throw e;
+      }
+    },
+  },
+  {
+    name: 'spawn_subagent',
+    description: 'Start a hidden helper for one job that can run in parallel (max 4). It works alone and reports back to you as a message when done. Not shown in the sidebar.',
+    parameters: obj({ goal: { type: 'string' }, label: { type: 'string' } }, ['goal']),
+    activity: 'working',
+    label: 'Starting a subagent',
+    impl: async (a, ctx) => {
+      try {
+        const s = createSubagent(ctx.botId, String(a.goal), a.label);
+        if (assignEngine(s.id) === 'managed') provisionEngine(s.id);
+        ctx.enqueueBotMessage(ctx.botId, s.id, String(a.goal), ctx.depth + 1);
+        return { output: `Subagent "${s.name}" started. Its result will arrive as a message.`, summary: `Started ${s.name}` };
+      } catch (e: any) {
+        return { output: String(e?.message ?? e) };
+      }
     },
   },
   {
