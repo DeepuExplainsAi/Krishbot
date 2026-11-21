@@ -74,3 +74,19 @@ Done and type-checked, `vite build` OK; tools exercised with a script:
 9. Installer: NOT tested on Windows (no Windows here). README now has the one-line terminal command as the tested route.
 
 Still open: Windows installer test, dark-mode visual check, `tests/e2e.mjs`, `tests/voice-call.mjs`, `web/src/dev/fixtures.ts`.
+
+
+## 2026-11-21 (evening): provider system is back (IN PROGRESS)
+Owner found that `full-port` dropped the old direct-provider system (Settings -> Models: Claude/Codex/Gemini CLI, Ollama/LM Studio, Groq, OpenRouter, Gemini API, OpenAI, Anthropic, any OpenAI-compatible API). Everything depended on a Hermes agent at 127.0.0.1:8642, so on a normal PC the Engine panel said "agent is not answering" and bots could not reply. Old code: commit `27f35cb` (`src/providers.js`, `src/presets.js`, `web/src/components/config/ModelsSection.tsx`).
+
+Rule: Krishbot must work with NO Hermes installed. Hermes stays as an optional engine.
+
+Plan (tick when done):
+- [ ] `server/src/providers.ts`: openai / anthropic / cli callers (port of old providers.js), live `/models` listing, free-model marking.
+- [ ] `server/src/presets.ts` + connections stored in `app_settings` (`connections` JSON); routes `GET /models`, `PUT|DELETE /models/:id`, `POST /models/test`, `GET /models/:id/list`.
+- [ ] Direct turn runner in `agent/` (`direct.ts`): history from rows, our tools (`create_bot`, `send_to_bot`, tasks, routines, memory, ask_user ...), local tools (run_command, read/write file, list dir, fetch_url, web_search), connected app (MCP) tools, approvals, step cap by effort.
+- [ ] `loop.ts` chooses: bot uses a local connection -> direct runner; else Hermes if reachable; else a clear message "Connect a model in Settings -> Models".
+- [ ] Engine panel: lists local connections as providers, status ready without Hermes; no red "agent is not answering" unless the user chose Hermes.
+- [ ] Settings -> Models page restored (`ModelsSection.tsx`), with live model lists, Refresh, free marks, Save and test with the real provider error.
+- [ ] Gemini CLI: pass `--skip-trust` / `GEMINI_CLI_TRUST_WORKSPACE=true`.
+- [ ] Verify with a fake OpenAI server (chat, tool call, create_bot), update this list, push.
