@@ -8,9 +8,11 @@ import { Icon } from '../Icon';
 import { ToolkitLogo } from '../ToolkitLogo';
 import { Glyph } from './glyphs';
 import { Switch } from './ui';
+import { ModelsSection } from './ModelsSection';
 
 const SECTIONS: { id: AppSection; label: string }[] = [
   { id: 'general', label: 'General' },
+  { id: 'models', label: 'Models' },
   { id: 'permissions', label: 'Permissions' },
   { id: 'apps', label: 'Connected apps' },
   { id: 'about', label: 'About' },
@@ -42,6 +44,7 @@ export function AppSettings() {
         <button type="button" className="app-settings__close icon-btn" onClick={close} aria-label="Close settings" title="Close (Esc)"><Icon name="close" opacity={0.8} /></button>
         <div className="app-settings__page">
           {section === 'general' && <GeneralSection />}
+          {section === 'models' && <ModelsSection />}
           {section === 'permissions' && <PermissionsSection />}
           {section === 'apps' && <AppsSection />}
           {section === 'about' && <AboutSection />}

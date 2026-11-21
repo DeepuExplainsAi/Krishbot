@@ -4,7 +4,9 @@ import { hub } from '../lib/hub.js';
 import { appendRow, emitBot, getBotRow, getLive, getRow, setLive, updateRow } from '../store.js';
 import type { ActivityKind, MessageBody, ToolCallBody } from '../types.js';
 import { appInfo } from '../apps.js';
-import { engineFor } from '../engine.js';
+import { engineFor, hermesReachable } from '../engine.js';
+import { allConnections, connection } from '../providers.js';
+import { runDirect } from './direct.js';
 import { instructionsFor } from './prompt.js';
 import { activityFor, appToolName, humanizeSlug, policyFor } from './tools.js';
 
@@ -349,10 +351,41 @@ async function runTurn(botId: string, trigger: Trigger) {
   let failed = false;
 
   try {
+    let input = triggerText(trigger);
+
+    // A direct model connection (Settings -> Models) runs the turn here; Hermes is the other way.
+    const chosen = bot.provider?.startsWith('local:') ? connection(bot.provider.slice(6)) : null;
+    if (bot.provider?.startsWith('local:') && !chosen) throw new Error(`The connection "${bot.provider.slice(6)}" is gone. Pick another in the Engine section or Settings → Models.`);
+    const conn = chosen ?? (!bot.provider && !(await hermesReachable(botId)) ? allConnections()[0] : null);
+    if (!bot.provider && !conn && !(await hermesReachable(botId))) throw new Error('No model is connected yet. Open Settings → Models and connect one (a plan you already have, a free key, or Ollama).');
+    if (conn) {
+      let sawTool = 0;
+      await runDirect({
+        botId, userId, depth: turn.depth, signal: ctrl.signal, effort: bot.effort ?? 'medium', conn, model: bot.model ?? null,
+        system: await instructionsFor(userId, botId), input,
+        ctx: { userId, botId, enqueueBotMessage, depth: turn.depth },
+        say: (t) => say(t),
+        setActivity: (kind, detail) => { if (!getLive(botId).awaiting) setLive(botId, { isRunning: true, activity: { kind, detail, since: now() }, steps: sawTool }); },
+        toolStart: (name, label, kind, args) => {
+          const row = appendRow(botId, 'tool-call', { type: 'tool-call', callId: `c${Date.now()}${sawTool}`, name, label, status: 'running', args } satisfies ToolCallBody);
+          turn.tools.push({ seq: row.seq, callId: String(row.seq), name, claimed: true, done: false });
+          sawTool++;
+          return row.seq;
+        },
+        toolEnd: (seq, status, summary) => {
+          const ref = turn.tools.find((r) => r.seq === seq);
+          if (ref) ref.done = true;
+          patchToolRow(botId, seq, { status, ...(summary ? { summary } : {}) });
+        },
+        approve: (pol, args, seq) => requestApproval({ userId, botId }, pol, args, seq),
+        silent: () => { turn.silent = true; },
+        isSilent: () => turn.silent,
+      });
+      return;
+    }
+
     const engine = await engineFor(botId);
     if (ctrl.signal.aborted) throw new Error('interrupted');
-
-    let input = triggerText(trigger);
 
     const res = await fetch(`${engine.url}/v1/responses`, {
       method: 'POST',

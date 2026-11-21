@@ -100,3 +100,7 @@ Node.js 22.13+ is needed. One-click apps start with `npx`, so they need Node.js 
 ## License
 
 Copyright (c) 2026 DeepuExplainsAi. Licensed under the [GNU AGPL v3.0](LICENSE). The license is also shown in Settings → About.
+
+
+## Connect a model
+Open **Settings → Models**. Pick one: a plan you already pay for (Claude Code, Codex, Gemini CLI: installed ones show up by themselves), a free key (OpenRouter, Gemini, Groq), a local model (Ollama, LM Studio) or any API key. Press **Save and test**. No other agent software is needed.

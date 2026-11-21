@@ -167,7 +167,7 @@ export function EngineSettings({ bot }: { bot: Bot }) {
       <div className="engine__meta">
         <span className={`engine__state is-${engine.status}`} title={engine.version ? `Hermes ${engine.version}` : undefined}>
           <i aria-hidden />
-          Hermes · profile {engine.profile} · {STATUS[engine.status] ?? engine.status}
+          {engine.provider?.startsWith('local:') ? 'Direct connection' : `Hermes · profile ${engine.profile}`} · {STATUS[engine.status] ?? engine.status}
         </span>
         {(engine.status === 'error' || engine.status === 'stopped') && (
           <button type="button" className="link-btn link-btn--small" onClick={restart} disabled={busy === 'restart'}>{busy === 'restart' ? 'Restarting…' : 'Restart agent'}</button>

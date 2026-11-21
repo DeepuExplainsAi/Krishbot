@@ -14,6 +14,8 @@ import { openTerminal, quote } from './terminal.js';
 import { engineHome, engineInfo, engineKind, forgetEngineOptions, restartEngine } from './engine.js';
 import { listMemories } from './engine-memory.js';
 import type { LibraryFile, Skill } from './types.js';
+import { binFound, callModel, forgetBins, listModels, PRESETS, savedConnections, saveConnections, type Conn } from './providers.js';
+import { forgetLocalLists } from './engine.js';
 
 /**
  * Bot settings, skills, library and memory maintenance.
@@ -21,7 +23,7 @@ import type { LibraryFile, Skill } from './types.js';
  */
 export const configApi = new Hono<AuthVars>();
 
-for (const p of ['/bots/*', '/skills/*']) configApi.use(p, requireUser);
+for (const p of ['/bots/*', '/skills/*', '/models', '/models/*']) configApi.use(p, requireUser);
 
 const ownBot = (userId: string, id: string) => {
   const b = getBotRow(id);
@@ -224,4 +226,75 @@ configApi.get('/bots/:id/files/raw', (c) => {
       'x-content-type-options': 'nosniff',
     },
   });
+});
+
+
+// ---------- models: direct connections (no agent harness needed) ----------
+
+const mask = (c: Conn) => ({ ...c, apiKey: c.apiKey ? `${c.apiKey.slice(0, 3)}…${c.apiKey.slice(-3)}` : undefined, hasKey: !!c.apiKey });
+
+configApi.get('/models', (c) => {
+  forgetBins();
+  return c.json({ presets: PRESETS.map((p) => ({ ...p, found: p.bin ? binFound(p.bin) : undefined })), connections: savedConnections().map(mask) });
+});
+
+const connFrom = (id: string, b: any, old?: Conn): Conn | string => {
+  const preset = PRESETS.find((p) => p.id === id);
+  if (!preset) return 'Unknown connection.';
+  const clean = (v: unknown, n = 500) => (typeof v === 'string' ? v.trim().slice(0, n) : undefined);
+  const conn: Conn = {
+    id, type: preset.type,
+    baseUrl: clean(b.baseUrl) ?? old?.baseUrl ?? preset.baseUrl,
+    model: clean(b.model, 200) ?? old?.model ?? preset.model,
+    command: clean(b.command) ?? old?.command ?? preset.command,
+    trust: typeof b.trust === 'boolean' ? b.trust : old?.trust ?? true,
+    apiKey: clean(b.apiKey, 400) || old?.apiKey,
+  };
+  if (preset.type === 'cli' && !conn.command) return 'Enter the command.';
+  if (preset.type === 'openai' && !conn.baseUrl) return 'Enter the base URL.';
+  if (preset.needsKey && !conn.apiKey) return 'Paste your API key.';
+  return conn;
+};
+
+configApi.put('/models/:id', async (c) => {
+  const id = c.req.param('id');
+  const list = savedConnections();
+  const conn = connFrom(id, await c.req.json().catch(() => ({})), list.find((x) => x.id === id));
+  if (typeof conn === 'string') return c.json({ error: conn }, 400);
+  saveConnections([...list.filter((x) => x.id !== id), conn]);
+  forgetLocalLists(id);
+  return c.json({ ok: true });
+});
+
+configApi.delete('/models/:id', (c) => {
+  saveConnections(savedConnections().filter((x) => x.id !== c.req.param('id')));
+  forgetLocalLists(c.req.param('id'));
+  return c.json({ ok: true });
+});
+
+/** A real round trip: one short question to the saved connection. The error text is the provider's own. */
+configApi.post('/models/test', async (c) => {
+  const { id } = await c.req.json<{ id?: string }>().catch(() => ({} as { id?: string }));
+  let conn = savedConnections().find((x) => x.id === id);
+  const preset = PRESETS.find((p) => p.id === id);
+  if (!conn && preset?.type === 'cli' && preset.bin && binFound(preset.bin)) conn = { id: preset.id, type: 'cli', command: preset.command, trust: true };
+  if (!conn) return c.json({ error: 'Save it first.' }, 404);
+  try {
+    if (conn.type !== 'cli' && !conn.model) {
+      const live = await listModels(conn);
+      conn = { ...conn, model: live.free[0] ?? live.models[0] };
+      if (!conn.model) return c.json({ error: 'Pick a model first (press Refresh to list them).' }, 400);
+    }
+    const r = await callModel(conn, 'Reply in at most five words.', [{ role: 'user', content: 'Say hello.' }], [], { signal: AbortSignal.timeout(90_000) });
+    return c.json({ ok: true, reply: r.text.trim().slice(0, 200), model: conn.model });
+  } catch (e: any) {
+    return c.json({ error: String(e?.message ?? e).slice(0, 500) }, 502);
+  }
+});
+
+/** The provider's live model list for a saved connection, free models first. */
+configApi.get('/models/:id/list', async (c) => {
+  const conn = savedConnections().find((x) => x.id === c.req.param('id'));
+  if (!conn) return c.json({ error: 'Save it first.' }, 404);
+  try { return c.json(await listModels(conn)); } catch (e: any) { return c.json({ error: String(e?.message ?? e).slice(0, 300) }, 502); }
 });

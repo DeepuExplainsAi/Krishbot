@@ -8,6 +8,7 @@ import { db } from './db.js';
 import { env } from './env.js';
 import { libraryRoot } from './paths.js';
 import type { EngineInfo, EngineProvider } from './types.js';
+import { allConnections, connLabel, listModels, PRESETS } from './providers.js';
 
 /**
  * Every bot is run by a Hermes agent.
@@ -359,7 +360,7 @@ export function engineHome(botId: string): string | null {
 
 /** Start the gateway in the background (after creating a bot, or on server start). */
 export function provisionEngine(botId: string) {
-  if (engineKind(botId) === 'managed') ensureManaged(botId).catch(() => {});
+  if (engineKind(botId) === 'managed' && binOnPath(env.hermesBin)) ensureManaged(botId).catch(() => {});
 }
 
 export async function restartEngine(botId: string): Promise<void> {
@@ -457,16 +458,22 @@ export async function engineInfo(botId: string, refresh = false): Promise<Engine
     e = { url: managedUrl(botId), key: managedKey(botId) };
   }
 
+  const local = await localProviders(refresh);
   const health = await healthy(e.url);
   if (!health) {
-    if (kind === 'primary') return { ...base, status: 'error', error: `The agent at ${env.hermesUrl} is not answering.` };
-    if (starting.has(botId)) return { ...base, status: 'starting' };
-    const failed = failures.get(botId);
-    if (failed) return { ...base, status: 'error', error: failed };
-    provisionEngine(botId);
-    return { ...base, status: 'starting' };
+    const viaLocal = String(b.provider ?? '').startsWith('local:') || !b.provider;
+    if (local.length && viaLocal) return { ...base, status: 'ready', providers: local, provider: b.provider ?? local[0].id, model: b.model ?? local[0].models[0] ?? null };
+    if (kind === 'managed' && hermesInstalled()) {
+      if (starting.has(botId)) return { ...base, status: 'starting', providers: local };
+      const failed = failures.get(botId);
+      if (failed) return { ...base, status: 'error', error: failed, providers: local };
+      provisionEngine(botId);
+      return { ...base, status: 'starting', providers: local };
+    }
+    const why = hermesInstalled() ? `The Hermes agent at ${env.hermesUrl} is not answering.` : 'No model is connected yet. Open Settings → Models and connect one: a plan you already have, a free key, or Ollama.';
+    return { ...base, status: 'error', error: why, providers: local };
   }
-  if (kind === 'managed' && starting.has(botId)) return { ...base, status: 'starting' };
+  if (kind === 'managed' && starting.has(botId)) return { ...base, status: 'starting', providers: local };
 
   if (refresh) optionsCache.delete(botId);
   const data = await modelOptions(botId, e);
@@ -482,9 +489,43 @@ export async function engineInfo(botId: string, refresh = false): Promise<Engine
     version: typeof health.version === 'string' && health.version !== 'unknown' ? health.version : null,
     model: b.model ?? data?.model ?? null,
     provider: b.provider ?? data?.provider ?? null,
-    providers,
+    providers: [...local, ...providers],
   };
 }
 
 /** After a sign-in the provider list changes; drop what we remembered. */
 export function forgetEngineOptions(botId: string) { optionsCache.delete(botId); }
+
+/** Is there a Hermes agent this bot could use right now (without starting anything)? */
+export async function hermesReachable(botId: string): Promise<boolean> {
+  const kind = engineKind(botId);
+  if (kind === 'primary') return !!(await healthy(env.hermesUrl, 1500));
+  if (kind === 'managed') return !!(await healthy(managedUrl(botId), 1500)) || binOnPath(env.hermesBin);
+  return binOnPath(env.hermesBin);
+}
+
+function binOnPath(bin: string): boolean {
+  if (path.isAbsolute(bin)) return fs.existsSync(bin);
+  const exts = process.platform === 'win32' ? ['.exe', '.cmd', '.bat', ''] : [''];
+  return (process.env.PATH ?? '').split(path.delimiter).some((d) => exts.some((x) => fs.existsSync(path.join(d, bin + x))));
+}
+
+const hermesInstalled = () => binOnPath(env.hermesBin);
+
+const liveLists = new Map<string, { models: string[]; free: string[] }>();
+
+/** The direct connections (Settings → Models) as providers the Engine panel can pick. */
+async function localProviders(refresh: boolean): Promise<EngineProvider[]> {
+  const conns = allConnections();
+  await Promise.all(conns.filter((c) => c.type !== 'cli' && (refresh || !liveLists.has(c.id))).map(async (c) => {
+    try { liveLists.set(c.id, await listModels(c)); } catch { /* offline or bad key: keep the presets */ }
+  }));
+  return conns.map((c): EngineProvider => {
+    const preset = PRESETS.find((p) => p.id === c.id);
+    const live = liveLists.get(c.id);
+    const models = [...new Set([...(c.model ? [c.model] : []), ...(live?.free ?? []), ...(live?.models ?? []), ...(preset?.models ?? [])])];
+    return { id: `local:${c.id}`, name: connLabel(c), kind: c.type === 'cli' ? 'subscription' : 'api_key', connected: true, models: c.type === 'cli' ? [] : models, free: live?.free ?? [] };
+  });
+}
+
+export const forgetLocalLists = (id: string) => liveLists.delete(id);
