@@ -29,7 +29,7 @@ export interface LibraryListing { status: 'ok' | 'asleep' | 'error'; path: strin
 
 export type BotPatch = Partial<Pick<Bot, 'name' | 'label' | 'description' | 'instructions' | 'avatarShape' | 'avatarColor' | 'effort' | 'mode'>>;
 
-export interface ModelPreset { id: string; group: string; label: string; type: 'openai' | 'anthropic' | 'cli'; hint?: string; command?: string; baseUrl?: string; model?: string; models?: string[]; needsKey?: boolean; found?: boolean }
+export interface ModelPreset { id: string; group: string; label: string; type: 'openai' | 'anthropic' | 'cli'; hint?: string; command?: string; login?: string; baseUrl?: string; model?: string; models?: string[]; needsKey?: boolean; found?: boolean }
 export interface ModelConn { id: string; type: string; baseUrl?: string; model?: string; command?: string; trust?: boolean; apiKey?: string; hasKey?: boolean }
 
 export const configApi = {
@@ -37,6 +37,7 @@ export const configApi = {
   saveModel: (id: string, body: Record<string, unknown>) => req<{ ok: true }>('PUT', `/models/${id}`, body),
   removeModel: (id: string) => req<{ ok: true }>('DELETE', `/models/${id}`),
   testModel: (body: { id: string }) => req<{ ok: true; reply: string; model?: string }>('POST', '/models/test', body),
+  modelLogin: (id: string) => req<{ ok: true; opened: boolean; command: string }>('POST', `/models/${id}/login`),
   listModels: (id: string) => req<{ models: string[]; free: string[] }>('GET', `/models/${id}/list`),
   settings: (botId: string) => req<BotSettingsBundle>('GET', `/bots/${botId}/settings`),
   updateBot: (botId: string, p: BotPatch) => req<{ bot: Bot }>('PATCH', `/bots/${botId}`, p),

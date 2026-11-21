@@ -24,6 +24,7 @@ jobs:
           path: |
             release/*.AppImage
             release/*.exe
+            release/*.deb
             release/*.dmg
   publish:
     needs: build

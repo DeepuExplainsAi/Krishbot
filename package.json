@@ -6,7 +6,9 @@
   "main": "main.cjs",
   "type": "module",
   "license": "AGPL-3.0-only",
-  "engines": { "node": ">=22.13" },
+  "engines": {
+    "node": ">=22.13"
+  },
   "author": "Krishbot",
   "scripts": {
     "start": "npm run build:server && electron .",
@@ -51,16 +53,17 @@
     },
     "linux": {
       "target": [
-        "AppImage"
+        "AppImage",
+        "deb"
       ],
       "category": "Utility",
       "artifactName": "Krishbot-${version}-linux-x64.${ext}"
     },
     "win": {
       "target": [
-        "portable"
+        "nsis"
       ],
-      "artifactName": "Krishbot-${version}-windows-x64.${ext}"
+      "artifactName": "Krishbot-Setup-${version}.${ext}"
     },
     "mac": {
       "target": [
@@ -71,6 +74,13 @@
       "artifactName": "Krishbot-${version}-mac-${arch}.${ext}"
     },
     "asar": false,
-    "npmRebuild": false
+    "npmRebuild": false,
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
   }
 }

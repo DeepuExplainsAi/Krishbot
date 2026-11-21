@@ -21,14 +21,18 @@ export interface Msg { role: 'user' | 'assistant' | 'tool'; content: string; too
 
 export interface Preset {
   id: string; group: string; label: string; type: ConnType; hint?: string;
-  command?: string; bin?: string; baseUrl?: string; model?: string; models?: string[]; needsKey?: boolean;
+  command?: string; bin?: string; login?: string; baseUrl?: string; model?: string; models?: string[]; needsKey?: boolean;
 }
 
 // Model ids checked against the providers' docs in November 2026. The live list (Refresh) is the source of truth.
 export const PRESETS: Preset[] = [
-  { id: 'claude-cli', group: 'Your subscription', label: 'Claude (Pro/Max plan, via Claude Code)', type: 'cli', command: 'claude -p', bin: 'claude', hint: 'Install Claude Code and run `claude` once to sign in. It uses your own plan.' },
-  { id: 'codex-cli', group: 'Your subscription', label: 'ChatGPT (Plus/Pro plan, via Codex)', type: 'cli', command: 'codex exec --skip-git-repo-check -', bin: 'codex', hint: 'Install Codex CLI and run `codex` once to sign in with ChatGPT.' },
-  { id: 'gemini-cli', group: 'Your subscription', label: 'Gemini (Google account, via Gemini CLI)', type: 'cli', command: 'gemini -p " "', bin: 'gemini', hint: 'Install Gemini CLI and run `gemini` once to sign in with Google (has a free tier).' },
+  { id: 'claude-cli', group: 'Your subscription', label: 'Claude (Pro/Max plan, via Claude Code)', type: 'cli', command: 'claude -p', bin: 'claude', login: 'claude', hint: 'Install Claude Code and run `claude` once to sign in. It uses your own plan.' },
+  { id: 'codex-cli', group: 'Your subscription', label: 'ChatGPT (Plus/Pro plan, via Codex)', type: 'cli', command: 'codex exec --skip-git-repo-check -', bin: 'codex', login: 'codex login', hint: 'Install Codex CLI and run `codex` once to sign in with ChatGPT.' },
+  { id: 'gemini-cli', group: 'Your subscription', label: 'Gemini (Google account, via Gemini CLI)', type: 'cli', command: 'gemini -p " "', bin: 'gemini', login: 'gemini', hint: 'Install Gemini CLI and run `gemini` once to sign in with Google (has a free tier).' },
+  { id: 'opencode-cli', group: 'Your subscription', label: 'OpenCode (any plan or key it supports)', type: 'cli', command: 'opencode run', bin: 'opencode', login: 'opencode auth login', hint: 'Install OpenCode, then press Sign in. Not tested here: edit the command if your version differs.' },
+  { id: 'kilo-cli', group: 'Your subscription', label: 'Kilo Code (via Kilo CLI)', type: 'cli', command: 'kilo run', bin: 'kilo', login: 'kilo auth login', hint: 'Install Kilo CLI, then press Sign in. Not tested here: edit the command if your version differs.' },
+  { id: 'kiro-cli', group: 'Your subscription', label: 'Kiro (via Kiro CLI)', type: 'cli', command: 'kiro-cli chat --no-interactive', bin: 'kiro-cli', login: 'kiro-cli login', hint: 'Install Kiro CLI, then press Sign in. Not tested here: edit the command if your version differs.' },
+  { id: 'qwen-cli', group: 'Your subscription', label: 'Qwen Code', type: 'cli', command: 'qwen -p " "', bin: 'qwen', login: 'qwen', hint: 'Install Qwen Code, then press Sign in. Not tested here.' },
   { id: 'custom-cli', group: 'Your subscription', label: 'Any command (prompt goes to stdin)', type: 'cli', command: '', hint: 'Any program that reads a prompt on stdin and prints the answer.' },
   { id: 'ollama', group: 'On this computer, free', label: 'Ollama', type: 'openai', baseUrl: 'http://localhost:11434/v1', model: '', models: [], hint: 'Install Ollama, run `ollama pull <model>`, then press Refresh to pick it.' },
   { id: 'lmstudio', group: 'On this computer, free', label: 'LM Studio', type: 'openai', baseUrl: 'http://localhost:1234/v1', model: '', models: [], hint: 'Start the LM Studio local server, load a model, then press Refresh.' },
@@ -38,6 +42,17 @@ export const PRESETS: Preset[] = [
   { id: 'openai', group: 'API keys', label: 'OpenAI', type: 'openai', baseUrl: 'https://api.openai.com/v1', model: 'gpt-6-luna', models: ['gpt-6.2-astra', 'gpt-6-luna'], needsKey: true },
   { id: 'anthropic', group: 'API keys', label: 'Anthropic', type: 'anthropic', baseUrl: 'https://api.anthropic.com', model: 'claude-sonnet-5-5', models: ['claude-fable-5-2', 'claude-opus-5-5', 'claude-sonnet-5-5', 'claude-haiku-5-5'], needsKey: true },
   { id: 'xai', group: 'API keys', label: 'xAI (Grok)', type: 'openai', baseUrl: 'https://api.x.ai/v1', model: 'grok-4.7', models: ['grok-4.7'], needsKey: true },
+  { id: 'deepseek', group: 'API keys', label: 'DeepSeek', type: 'openai', baseUrl: 'https://api.deepseek.com/v1', model: '', models: [], needsKey: true },
+  { id: 'mistral', group: 'API keys', label: 'Mistral', type: 'openai', baseUrl: 'https://api.mistral.ai/v1', model: '', models: [], needsKey: true },
+  { id: 'together', group: 'API keys', label: 'Together AI', type: 'openai', baseUrl: 'https://api.together.xyz/v1', model: '', models: [], needsKey: true },
+  { id: 'fireworks', group: 'API keys', label: 'Fireworks AI', type: 'openai', baseUrl: 'https://api.fireworks.ai/inference/v1', model: '', models: [], needsKey: true },
+  { id: 'cerebras', group: 'API keys', label: 'Cerebras', type: 'openai', baseUrl: 'https://api.cerebras.ai/v1', model: '', models: [], needsKey: true },
+  { id: 'perplexity', group: 'API keys', label: 'Perplexity', type: 'openai', baseUrl: 'https://api.perplexity.ai', model: '', models: [], needsKey: true },
+  { id: 'nvidia', group: 'API keys', label: 'NVIDIA NIM', type: 'openai', baseUrl: 'https://integrate.api.nvidia.com/v1', model: '', models: [], needsKey: true },
+  { id: 'huggingface', group: 'API keys', label: 'Hugging Face router', type: 'openai', baseUrl: 'https://router.huggingface.co/v1', model: '', models: [], needsKey: true },
+  { id: 'moonshot', group: 'API keys', label: 'Moonshot (Kimi)', type: 'openai', baseUrl: 'https://api.moonshot.ai/v1', model: '', models: [], needsKey: true },
+  { id: 'zai', group: 'API keys', label: 'Z.ai (GLM)', type: 'openai', baseUrl: 'https://api.z.ai/api/paas/v4', model: '', models: [], needsKey: true },
+  { id: 'githubmodels', group: 'API keys', label: 'GitHub Models', type: 'openai', baseUrl: 'https://models.github.ai/inference', model: '', models: [], needsKey: true },
   { id: 'custom', group: 'API keys', label: 'Any OpenAI-compatible API', type: 'openai', baseUrl: '', model: '', models: [], needsKey: true },
 ];
 

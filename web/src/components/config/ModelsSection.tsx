@@ -29,6 +29,11 @@ function ModelRow({ preset, conn, onChange }: { preset: ModelPreset; conn?: Mode
     catch (e) { setNote({ ok: false, text: (e as Error).message }); }
     finally { setBusy(null); }
   };
+  const signIn = async () => {
+    setNote(null);
+    try { const r = await configApi.modelLogin(preset.id); setNote({ ok: true, text: r.opened ? 'A terminal window opened. Finish the sign-in there, then press Save and test.' : `Could not open a terminal. Run this yourself: ${r.command}` }); }
+    catch (e) { setNote({ ok: false, text: (e as Error).message }); }
+  };
   const test = async () => {
     setBusy('test'); setNote(null);
     try { await configApi.saveModel(preset.id, body()); const r = await configApi.testModel({ id: preset.id }); setNote({ ok: true, text: `Works. It answered: “${r.reply}”` }); onChange(); }
@@ -50,6 +55,7 @@ function ModelRow({ preset, conn, onChange }: { preset: ModelPreset; conn?: Mode
         <div className="cfg-form">
           {isCli ? (
             <>
+              {preset.login && <button type="button" className="cfg-btn cfg-btn--secondary" onClick={signIn}>Sign in with your account</button>}
               <label className="cfg-field__label">Command</label>
               <input className="text-input" value={v.command} placeholder="my-cli --print" spellCheck={false} onChange={(e) => setV({ ...v, command: e.target.value })} />
               <div className="cfg-row" style={{ padding: '8px 0' }}>

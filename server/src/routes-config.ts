@@ -272,6 +272,15 @@ configApi.delete('/models/:id', (c) => {
   return c.json({ ok: true });
 });
 
+/** Open the plan's own sign-in (Claude Code, Codex, ...) in a terminal window on this computer. */
+configApi.post('/models/:id/login', async (c) => {
+  const preset = PRESETS.find((p) => p.id === c.req.param('id'));
+  if (!preset?.login) return c.json({ error: 'No sign-in for this one.' }, 400);
+  if (preset.bin && !binFound(preset.bin)) return c.json({ error: `"${preset.bin}" is not installed. ${preset.hint ?? ''}` }, 409);
+  const opened = await openTerminal(preset.login);
+  return c.json({ ok: true, opened, command: preset.login });
+});
+
 /** A real round trip: one short question to the saved connection. The error text is the provider's own. */
 configApi.post('/models/test', async (c) => {
   const { id } = await c.req.json<{ id?: string }>().catch(() => ({} as { id?: string }));
