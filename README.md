@@ -16,8 +16,14 @@ The apps are not code-signed. Windows: "More info" then "Run anyway". macOS: rig
 **Installer not working?** Use the terminal route (needs Node.js 20+), it is the tested one:
 
 ```
-git clone https://github.com/DeepuExplainsAi/Krishbot && cd Krishbot && npm install && npm run build && npm run serve
+git clone https://github.com/DeepuExplainsAi/Krishbot
+cd Krishbot
+npm install
+npm run build
+npm run serve
 ```
+
+Run the lines one at a time (Windows PowerShell 5 does not understand `&&`).
 
 Then open the `http://localhost:8787` link it prints.
 
